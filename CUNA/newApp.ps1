@@ -8,12 +8,13 @@ $token = 'XvhWZ00LRU27DkUmsyVBq'
 #"Dynamic" Parameters
 $apiversion = 'v1'
 
+<# Script Execution Start #>
+
+
 #Create Header Object for request to use certian objects may add to this header
 $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 #Add Auth Header for API to use
 $headers.Add("Authorization", "Api-Token "+ $token)
-
-
 
 
 #build Auto Tags request
@@ -29,29 +30,43 @@ $builtRequest = requestBuilder -endpoint $uri
 #Execute request against API
 $response = executeRequest -request $builtRequest -method 'GET' -headers $headers 
 
-$response | ConvertTo-Json -Depth 24
-
-
-<# $newRules = addNewRule -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
+#Set properties for adding rule object to config
+$newRules = addNewRule -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
+#Add new rule object to list of rules
 $newRules = $response.rules += $newRules
 
-ConvertTo-Json -InputObject $newRules -Depth 24
 
- #>function addNewRule ($entity, $condtionKey, $conditionValue)
+
+<# Script Execution End #>
+
+$newRules | ConvertTo-Json -Depth 24
+
+
+
+<#FUNCTIONS LIST
+addNewRule ($entity, $condtionKey, $conditionValue)
+executeRequest ( $request , $method, $headers, $body )
+requestBuilder($endpoint, $parameters)
+getIdValue($apiResponse ,$name)
+#>
+function addNewRule ($entity, $condtionKey, $conditionValue)
 {#Format rules string to update an exisiting rule configuration
-    $rulesJson = '{
-        "type":  "' + $entity + '",
+    $rulesJson = @"
+    {
+        "type":  "$entity",
         "enabled":  true,
         "valueFormat":  null,
         "propagationTypes":  [
                              ],
         "conditions":  [
                            {
-                               "key":  "{attribute=' + $condtionKey + '}",
-                               "comparisonInfo":  "{type=STRING; operator=CONTAINS; value=' + $conditionValue + '; negate=False; caseSensitive=False}"
+                               "key":  "{attribute=$condtionKey}",
+                               "comparisonInfo":  "{type=STRING; operator=CONTAINS; value=$conditionValue; negate=False; caseSensitive=False}"
                            }
                        ]
-    }'
+    }
+"@
+
     ConvertFrom-Json -InputObject $rulesJson
 }
 
