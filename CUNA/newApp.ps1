@@ -31,43 +31,64 @@ $builtRequest = requestBuilder -endpoint $uri
 $response = executeRequest -request $builtRequest -method 'GET' -headers $headers 
 
 #Set properties for adding rule object to config
-$newRules = addNewRule -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
-#Add new rule object to list of rules
-$newRules = $response.rules += $newRules
+$response = addNewRule -sJson $response -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
 
 
 
 <# Script Execution End #>
 
-$newRules | ConvertTo-Json -Depth 24
+$response | ConvertTo-Json -Depth 24
 
 
 
 <#FUNCTIONS LIST
-addNewRule ($entity, $condtionKey, $conditionValue)
+addNewRule ($sJson, $entity, $condtionKey, $conditionValue)
 executeRequest ( $request , $method, $headers, $body )
 requestBuilder($endpoint, $parameters)
 getIdValue($apiResponse ,$name)
 #>
-function addNewRule ($entity, $condtionKey, $conditionValue)
+function addNewRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
 {#Format rules string to update an exisiting rule configuration
-    $rulesJson = @"
+    if (!$optionalValue)
     {
-        "type":  "$entity",
-        "enabled":  true,
-        "valueFormat":  null,
-        "propagationTypes":  [
-                             ],
-        "conditions":  [
-                           {
-                               "key":  "{attribute=$condtionKey}",
-                               "comparisonInfo":  "{type=STRING; operator=CONTAINS; value=$conditionValue; negate=False; caseSensitive=False}"
-                           }
-                       ]
-    }
+        #New Rules Object with Optional Tag name
+        $rulesJson = @"
+        {
+            "type":  "$entity",
+            "enabled":  true,
+            "valueFormat":  "$optionalValue",
+            "propagationTypes":  [
+                                ],
+            "conditions":  [
+                            {
+                                "key":  "{attribute=$condtionKey}",
+                                "comparisonInfo":  "{type=STRING; operator=CONTAINS; value=$conditionValue; negate=False; caseSensitive=False}"
+                            }
+                        ]
+        }
 "@
-
-    ConvertFrom-Json -InputObject $rulesJson
+    }else{
+        #New Rules Object without optional value
+        $rulesJson = @"
+        {
+            "type":  "$entity",
+            "enabled":  true,
+            "valueFormat":  null,
+            "propagationTypes":  [
+                                ],
+            "conditions":  [
+                            {
+                                "key":  "{attribute=$condtionKey}",
+                                "comparisonInfo":  "{type=STRING; operator=CONTAINS; value=$conditionValue; negate=False; caseSensitive=False}"
+                            }
+                        ]
+        }
+"@
+    }
+    #Convert jSon to Powershell object for adding new rule
+    $newRules = ConvertFrom-Json -InputObject $rulesJson -Depth 5
+    #Add new rule object to list of rules
+    $newRules = $sJson.rules += $newRules
 }
 
 
