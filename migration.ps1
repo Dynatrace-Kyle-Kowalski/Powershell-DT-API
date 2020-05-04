@@ -40,9 +40,7 @@ $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -
 #Get json element to search for config ID
 $destResponse = getFromSource -endpoint $configEndpoint
 #Get json element for config
-$destID = getIdValue -apiResponse $destResponse -name $configName
-
-
+putToDest -body $sourceResponse -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $destResponse -name $configName))
 
 
 <#FUNCTIONS LIST
@@ -51,10 +49,16 @@ requestBuilder($endpoint, $parameters)
 getIdValue($apiResponse ,$name)
 getFromSource( $endpoint, $parameters)
 #>
+
+
 function executeRequest ( $request , $method, $headers, $body )
 { #Execute api requests
     #Write-Host $request
-    Invoke-RestMethod $request -Method $method -Headers $headers -Body $body   
+    if($body)
+    {
+        $body = ConvertTo-Json -depth 24 -InputObject $body
+    }
+    Invoke-RestMethod $request -Method $method -Headers $headers -Body $temp   
 } 
 
 function getFromDest ($endpoint, $parameters)
@@ -80,8 +84,6 @@ function putToDest ($endpoint, $parameters, $body)
     #Execute request against API
     executeRequest -request $builtRequest -method 'PUT' -headers $destHeaders -body $body
 }
-
-
 
 function putToSource( $endpoint, $parameters)
 {#get Configruation from source environment
