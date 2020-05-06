@@ -1,14 +1,16 @@
-$tagName = 'test'
+$tagName = ''
 
 <#API FRAME WORK SET UP START#>
 #Requried API inputs
+$isManaged = $False
+
 $sourceEnvironment = 'goy71950'
 $sourceDomain = 'live.dynatrace.com'
-$sourceToken = 'yRt9grsERkKTuFnn2oSeu'
+$sourceToken = '<Token Here>'
 
 $destEnvironment = 'wzj14229'
 $destDomain = 'live.dynatrace.com'
-$destToken = '6SUK5vqYQoG4r_Hduff02'
+$destToken = '<Token Here>'
 
 #"Dynamic" Parameters
 $apiversion = 'v1'
@@ -26,21 +28,15 @@ $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 
 migrateRulesConfig -configEndpoint 'autoTags' -configName $tagName 
 
-
-
 <#FUNCTIONS LIST
-migrateRulesConfig ($configEndpoint, $configName)
 executeRequest ( $request , $method, $headers, $body )
 requestBuilder($endpoint, $parameters)
-getFromDest ($endpoint, $parameters)
-putToDest ($endpoint, $parameters, $body)
-getFromSource( $endpoint, $parameters)
-putToSource( $endpoint, $parameters, $body)
 getIdValue($apiResponse ,$name)
+getFromSource( $endpoint, $parameters)
 #>
 
 function migrateRulesConfig ($configEndpoint, $configName)
-{#Migration of Rules based configurations
+{
     #Get json element to search for config ID
     $sourceResponse = getFromSource -endpoint $configEndpoint
     #Get json element for config
@@ -93,20 +89,16 @@ function putToDest ($endpoint, $parameters, $body)
     $destHeaders.remove("Content-Type", "application/json")
 }
 
-function putToSource( $endpoint, $parameters, $body)
+function putToSource( $endpoint, $parameters)
 {#get Configruation from source environment
     if (!$parameters)
     {
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint 
     }else{
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
-    } 
-    #Add Content-Type Header for API parsing
-    $sourceHeaders.Add("Content-Type", "application/json")
+    }
     #Execute request against API
-    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders -body $body
-    #header clean up
-    $sourceHeaders.remove("Content-Type", "application/json")
+    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders 
 }
 
 function getFromSource( $endpoint, $parameters)
@@ -121,15 +113,25 @@ function getFromSource( $endpoint, $parameters)
     executeRequest -request $builtRequest -method 'GET' -headers $sourceHeaders 
 }
 
-function requestBuilder($endpoint, $parameters, $environment, $domain )
+function requestBuilder($endpoint, $parameters, $environment, $domain)
 {#build string based on variables for script flexibility
-    if (!$parameters)
-    {
-        'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + '/' + $endpoint
-    }else {
-        'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
-    }
     
+    if(!$isManaged)
+    {
+        if (!$parameters)
+        {
+            'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint
+        }else {
+            'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint + "?" + $parameters
+        }
+    }else{
+        if (!$parameters)
+        {
+            'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + '/' + $endpoint
+        }else {
+            'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+        }
+    }
 }
 
 function cleanMetaData ($dirtyResponse)
