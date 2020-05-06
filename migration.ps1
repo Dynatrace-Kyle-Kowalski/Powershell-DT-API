@@ -1,12 +1,8 @@
-#TODO - script data collection
-
-
-
 <#API FRAME WORK SET UP START#>
 #Requried API inputs
-$sourceEnvironment = 'vkw74953'
-$sourceDomain = 'sprint.dynatracelabs.com'
-$sourceToken = 'XvhWZ00LRU27DkUmsyVBq'
+$sourceEnvironment = 'goy71950'
+$sourceDomain = 'live.dynatrace.com'
+$sourceToken = 'yRt9grsERkKTuFnn2oSeu'
 
 $destEnvironment = 'vkw74953'
 $destDomain = 'sprint.dynatracelabs.com'
@@ -24,10 +20,9 @@ $sourceHeaders.Add("Authorization", "Api-Token "+ $sourceToken)
 $destHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 #Add Auth Header for API to use
 $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
-
 <#API FRAME WORK SET UP END#>
 
-migrateRulesConfig -configEndpoint 'autoTags' -configName 'service'
+migrateRulesConfig -configEndpoint 'autoTags' -configName 'Migration Test'
 
 <#FUNCTIONS LIST
 executeRequest ( $request , $method, $headers, $body )
@@ -47,8 +42,6 @@ function migrateRulesConfig ($configEndpoint, $configName)
     $destResponse = getFromDest -endpoint $configEndpoint
     #cleanUpRequest
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
-
-    $cleanBody.name = 'new'
     #put new json element for config
     putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $destResponse -name $configName))
 }
@@ -89,7 +82,7 @@ function putToDest ($endpoint, $parameters, $body)
     #Execute request against API
     executeRequest -request $builtRequest -method 'PUT' -headers $destHeaders -body $body
     #header clean up
-    $destHeaders.Remove("Content-Type", "application/json")
+    $destHeaders.remove("Content-Type", "application/json")
 }
 
 function putToSource( $endpoint, $parameters)
