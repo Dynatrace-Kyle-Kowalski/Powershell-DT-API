@@ -5,13 +5,13 @@
       ],
       "clusterVersion": "1.191.101.20200414-115902"
     },
-    "id": "81b3b993-1165-4ebb-8e2f-88da7ec1d5e5",
-    "name": "CherwellSystem",
+    "id": "81b3b993-1165-4ebb-8e2f-877da7ec1d5e5",
+    "name": "TAGNAME",
     "rules": [
       {
         "type": "APPLICATION",
         "enabled": true,
-        "valueFormat": "loanliner.com",
+        "valueFormat": "OPTIONAL VALUE",
         "propagationTypes": [],
         "conditions": [
           {
@@ -21,7 +21,7 @@
             "comparisonInfo": {
               "type": "STRING",
               "operator": "CONTAINS",
-              "value": "loanliner",
+              "value": "Testing Value",
               "negate": false,
               "caseSensitive": true
             }
@@ -31,7 +31,7 @@
       {
         "type": "APPLICATION",
         "enabled": true,
-        "valueFormat": "CMRS - Benefits for You",
+        "valueFormat": "Optional Name",
         "propagationTypes": [],
         "conditions": [
           {
@@ -41,7 +41,7 @@
             "comparisonInfo": {
               "type": "STRING",
               "operator": "CONTAINS",
-              "value": "benefitsforyou",
+              "value": "Testing 2",
               "negate": false,
               "caseSensitive": false
             }
