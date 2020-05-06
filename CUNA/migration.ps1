@@ -1,12 +1,14 @@
+$tagName = 'test'
+
 <#API FRAME WORK SET UP START#>
 #Requried API inputs
 $sourceEnvironment = 'goy71950'
 $sourceDomain = 'live.dynatrace.com'
 $sourceToken = 'yRt9grsERkKTuFnn2oSeu'
 
-$destEnvironment = 'vkw74953'
-$destDomain = 'sprint.dynatracelabs.com'
-$destToken = 'XvhWZ00LRU27DkUmsyVBq'
+$destEnvironment = 'wzj14229'
+$destDomain = 'live.dynatrace.com'
+$destToken = '6SUK5vqYQoG4r_Hduff02'
 
 #"Dynamic" Parameters
 $apiversion = 'v1'
@@ -22,17 +24,23 @@ $destHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[Strin
 $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 <#API FRAME WORK SET UP END#>
 
-migrateRulesConfig -configEndpoint 'autoTags' -configName 'Migration Test'
+migrateRulesConfig -configEndpoint 'autoTags' -configName $tagName 
+
+
 
 <#FUNCTIONS LIST
+migrateRulesConfig ($configEndpoint, $configName)
 executeRequest ( $request , $method, $headers, $body )
 requestBuilder($endpoint, $parameters)
-getIdValue($apiResponse ,$name)
+getFromDest ($endpoint, $parameters)
+putToDest ($endpoint, $parameters, $body)
 getFromSource( $endpoint, $parameters)
+putToSource( $endpoint, $parameters, $body)
+getIdValue($apiResponse ,$name)
 #>
 
 function migrateRulesConfig ($configEndpoint, $configName)
-{
+{#Migration of Rules based configurations
     #Get json element to search for config ID
     $sourceResponse = getFromSource -endpoint $configEndpoint
     #Get json element for config
@@ -85,16 +93,20 @@ function putToDest ($endpoint, $parameters, $body)
     $destHeaders.remove("Content-Type", "application/json")
 }
 
-function putToSource( $endpoint, $parameters)
+function putToSource( $endpoint, $parameters, $body)
 {#get Configruation from source environment
     if (!$parameters)
     {
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint 
     }else{
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
-    }
+    } 
+    #Add Content-Type Header for API parsing
+    $sourceHeaders.Add("Content-Type", "application/json")
     #Execute request against API
-    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders 
+    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders -body $body
+    #header clean up
+    $sourceHeaders.remove("Content-Type", "application/json")
 }
 
 function getFromSource( $endpoint, $parameters)

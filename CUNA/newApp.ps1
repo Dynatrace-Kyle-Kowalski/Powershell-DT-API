@@ -86,7 +86,7 @@ function addNewRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalVa
 "@
     }
     #Convert jSon to Powershell object for adding new rule
-    $newRules = ConvertFrom-Json -InputObject $rulesJson -Depth 5
+    $newRules = ConvertFrom-Json -InputObject $rulesJson -Depth 16
     #Add new rule object to list of rules
     $newRules = $sJson.rules += $newRules
 }
