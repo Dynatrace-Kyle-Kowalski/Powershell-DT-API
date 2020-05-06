@@ -1,7 +1,6 @@
 #TODO - script data collection
 
-$configEndpoint = 'autoTags'
-$configName = 'service'
+
 
 <#API FRAME WORK SET UP START#>
 #Requried API inputs
@@ -28,20 +27,7 @@ $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 
 <#API FRAME WORK SET UP END#>
 
-
-
-
-
-#Get json element to search for config ID
-$sourceResponse = getFromSource -endpoint $configEndpoint
-#Get json element for config
-$sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))
-
-#Get json element to search for config ID
-$destResponse = getFromSource -endpoint $configEndpoint
-#Get json element for config
-putToDest -body $sourceResponse -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $destResponse -name $configName))
-
+migrateRulesConfig -configEndpoint 'autoTags' -configName 'service'
 
 <#FUNCTIONS LIST
 executeRequest ( $request , $method, $headers, $body )
@@ -49,6 +35,23 @@ requestBuilder($endpoint, $parameters)
 getIdValue($apiResponse ,$name)
 getFromSource( $endpoint, $parameters)
 #>
+
+function migrateRulesConfig ($configEndpoint, $configName)
+{
+    #Get json element to search for config ID
+    $sourceResponse = getFromSource -endpoint $configEndpoint
+    #Get json element for config
+    $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))
+
+    #Get json element to search for config ID
+    $destResponse = getFromDest -endpoint $configEndpoint
+    #cleanUpRequest
+    $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
+
+    $cleanBody.name = 'new'
+    #put new json element for config
+    putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $destResponse -name $configName))
+}
 
 
 function executeRequest ( $request , $method, $headers, $body )
@@ -58,7 +61,7 @@ function executeRequest ( $request , $method, $headers, $body )
     {
         $body = ConvertTo-Json -depth 24 -InputObject $body
     }
-    Invoke-RestMethod $request -Method $method -Headers $headers -Body $temp   
+    Invoke-RestMethod $request -Method $method -Headers $headers -Body $body   
 } 
 
 function getFromDest ($endpoint, $parameters)
@@ -81,8 +84,12 @@ function putToDest ($endpoint, $parameters, $body)
     }else{
         $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint -parameters $parameters
     }
+    #Add Content-Type Header for API parsing
+    $destHeaders.Add("Content-Type", "application/json")
     #Execute request against API
     executeRequest -request $builtRequest -method 'PUT' -headers $destHeaders -body $body
+    #header clean up
+    $destHeaders.Remove("Content-Type", "application/json")
 }
 
 function putToSource( $endpoint, $parameters)
@@ -120,9 +127,16 @@ function requestBuilder($endpoint, $parameters, $environment, $domain )
     
 }
 
+function cleanMetaData ($dirtyResponse)
+{#clean cluster meta data and ID
+    $dirtyResponse.psobject.properties.remove('metadata')
+    $dirtyResponse.psobject.properties.remove('id')
+    $dirtyResponse
+}
+
 function getIdValue($apiResponse ,$name)
 {#Query the ID list to find the id needed
     #Write-Host $apiResponse
-    $return = $apiResponse.values | Where-Object {$_.name -eq $name}
-    $return.id
+    $idReturn = $apiResponse.values | Where-Object {$_.name -eq $name}
+    $idReturn.id
 }
