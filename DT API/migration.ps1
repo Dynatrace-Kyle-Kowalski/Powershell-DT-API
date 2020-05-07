@@ -1,5 +1,5 @@
-$tagName = 'CherwellService'
-$config = 'autoTags'
+$configName = 'MIGRATION'
+$config = 'anomalyDetection/hosts'
 
 <#API FRAME WORK SET UP START#>
 #Requried API inputs
@@ -27,10 +27,10 @@ $destHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[Strin
 $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 <#API FRAME WORK SET UP END#>
 
-migrateRulesConfig -configEndpoint $config -configName $tagName 
+migrateIDConfig -configEndpoint $config -configName $configName 
 
 <#FUNCTIONS LIST
-migrateRulesConfig ($configEndpoint, $configName)
+migrateIDConfig ($configEndpoint, $configName)
 executeRequest ( $request , $method, $headers, $body )
 requestBuilder($endpoint, $parameters)
 getIdValue($apiResponse ,$name)
@@ -41,7 +41,7 @@ putToDest ($endpoint, $parameters, $body)
 cleanMetaData ($dirtyResponse)
 #>
 
-function migrateRulesConfig ($configEndpoint, $configName){
+function migrateIDConfig ($configEndpoint, $configName){#Migration for rules that utilize a Dynatrace Hash ID
     try{ 
         #Get json element to search for config ID
         $sourceResponse = getFromSource -endpoint $configEndpoint

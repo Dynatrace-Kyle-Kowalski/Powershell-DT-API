@@ -4,4 +4,4 @@ Powershell scripts to help with common Dynatrace API Tasks
 Current Functions
 
 
-Migrate rule based config from 1 environment to another (migration.ps1)
+Migrate ID based configs from 1 environment to another (migration.ps1)
