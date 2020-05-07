@@ -1,4 +1,4 @@
-$tagName = 'CherwellCategory'
+$tagName = 'CherwellService'
 $config = 'autoTags'
 
 <#API FRAME WORK SET UP START#>
