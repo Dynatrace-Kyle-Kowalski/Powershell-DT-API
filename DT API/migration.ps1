@@ -1,16 +1,17 @@
-$tagName = ''
+$tagName = 'CherwellCategory'
+$config = 'autoTags'
 
 <#API FRAME WORK SET UP START#>
 #Requried API inputs
-$isManaged = $False
+$isManaged = $FALSE
 
 $sourceEnvironment = 'goy71950'
 $sourceDomain = 'live.dynatrace.com'
-$sourceToken = '<Token Here>'
+$sourceToken = 'yRt9grsERkKTuFnn2oSeu'
 
-$destEnvironment = 'wzj14229'
-$destDomain = 'live.dynatrace.com'
-$destToken = '<Token Here>'
+$destEnvironment = 'vkw74953'
+$destDomain = 'sprint.dynatracelabs.com'
+$destToken = 'XvhWZ00LRU27DkUmsyVBq'
 
 #"Dynamic" Parameters
 $apiversion = 'v1'
@@ -26,7 +27,7 @@ $destHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[Strin
 $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 <#API FRAME WORK SET UP END#>
 
-migrateRulesConfig -configEndpoint 'autoTags' -configName $tagName 
+migrateRulesConfig -configEndpoint $config -configName $tagName 
 
 <#FUNCTIONS LIST
 migrateRulesConfig ($configEndpoint, $configName)
@@ -40,44 +41,53 @@ putToDest ($endpoint, $parameters, $body)
 cleanMetaData ($dirtyResponse)
 #>
 
-function migrateRulesConfig ($configEndpoint, $configName)
-{
-    #Get json element to search for config ID
-    $sourceResponse = getFromSource -endpoint $configEndpoint
-    #Get json element for config
-    $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))
-    
+function migrateRulesConfig ($configEndpoint, $configName){
+    try{ 
+        #Get json element to search for config ID
+        $sourceResponse = getFromSource -endpoint $configEndpoint
+        #Get json element for config
+        $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))     
+    }catch{
+        Write-Host "Source Get Error"
+        BREAK
+    }
 
-    try
-    {
+    try{
         #Get json element to search for config ID
         $destResponse = getFromDest -endpoint $configEndpoint
         #get ID from Destination system to update config of same name to Source
         $destID = getIdValue -apiResponse $destResponse -name $configName
-    }catch
-    {
+    }catch{
         Write-Host "Destination Get Error"
+        BREAK
     }
 
     #cleanUpRequest
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
-    #put new json element for config
-    putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
+    try{
+        #check for exisiting Config
+        if ($destID){#put new json in for config
+            putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
+        }else{#create new configuration 
+            postToDest -body $cleanBody -endpoint ($configEndpoint)
+        }
+    }catch{
+        Write-Host "Submission Error"
+    }
+    
 }
 
 
 function executeRequest ( $request , $method, $headers, $body )
 { #Execute api requests
     #Write-Host $request
-    if($body)
-    {
+    if($body){ #check for body which should be a powershell object
         $body = ConvertTo-Json -depth 24 -InputObject $body
     }
     Invoke-RestMethod $request -Method $method -Headers $headers -Body $body   
 } 
 
-function getFromDest ($endpoint, $parameters)
-{#submit config to new environment
+function getFromDest ($endpoint, $parameters){#submit config to new environment
     if (!$parameters)
     {
         $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint 
@@ -88,10 +98,8 @@ function getFromDest ($endpoint, $parameters)
     executeRequest -request $builtRequest -method 'GET' -headers $destHeaders 
 }
 
-function putToDest ($endpoint, $parameters, $body)
-{#submit config to new environment
-    if (!$parameters)
-    {
+function putToDest ($endpoint, $parameters, $body){#submit config to new environment
+    if (!$parameters){
         $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint 
     }else{
         $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint -parameters $parameters
@@ -104,10 +112,22 @@ function putToDest ($endpoint, $parameters, $body)
     $destHeaders.remove("Content-Type")
 }
 
-function putToSource( $endpoint, $parameters, $body)
-{#get Configruation from source environment
-    if (!$parameters)
-    {
+function postToDest ($endpoint, $parameters, $body){#submit new config to new environment
+    if (!$parameters){
+        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint 
+    }else{
+        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint -parameters $parameters
+    }
+    #Add Content-Type Header for API parsing
+    $destHeaders.Add("Content-Type", "application/json")
+    #Execute request against API
+    executeRequest -request $builtRequest -method 'POST' -headers $destHeaders -body $body
+    #header clean up
+    $destHeaders.remove("Content-Type")
+}
+
+function putToSource( $endpoint, $parameters, $body){#get Configruation from source environment
+    if (!$parameters){
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint 
     }else{
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
@@ -120,10 +140,8 @@ function putToSource( $endpoint, $parameters, $body)
     $sourceHeaders.remove("Content-Type")
 }
 
-function getFromSource( $endpoint, $parameters)
-{#get Configruation from source environment
-    if (!$parameters)
-    {
+function getFromSource( $endpoint, $parameters){#get Configruation from source environment
+    if (!$parameters){
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint 
     }else{
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
@@ -132,20 +150,16 @@ function getFromSource( $endpoint, $parameters)
     executeRequest -request $builtRequest -method 'GET' -headers $sourceHeaders 
 }
 
-function requestBuilder($endpoint, $parameters, $environment, $domain)
-{#build string based on variables for script flexibility
+function requestBuilder($endpoint, $parameters, $environment, $domain){#build string based on variables for script flexibility
     
-    if(!$isManaged)
-    {
-        if (!$parameters)
-        {
+    if($isManaged){
+        if (!$parameters){
             'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint
         }else {
             'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint + "?" + $parameters
         }
     }else{
-        if (!$parameters)
-        {
+        if (!$parameters){
             'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + '/' + $endpoint
         }else {
             'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
@@ -153,15 +167,13 @@ function requestBuilder($endpoint, $parameters, $environment, $domain)
     }
 }
 
-function cleanMetaData ($dirtyResponse)
-{#clean cluster meta data and ID
+function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
     $dirtyResponse.psobject.properties.remove('metadata')
     $dirtyResponse.psobject.properties.remove('id')
     $dirtyResponse
 }
 
-function getIdValue($apiResponse ,$name)
-{#Query the ID list to find the id needed
+function getIdValue($apiResponse ,$name){#Query the ID list to find the id needed
     #Write-Host $apiResponse
     $idReturn = $apiResponse.values | Where-Object {$_.name -eq $name}
     $idReturn.id
