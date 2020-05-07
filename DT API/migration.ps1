@@ -46,13 +46,23 @@ function migrateRulesConfig ($configEndpoint, $configName)
     $sourceResponse = getFromSource -endpoint $configEndpoint
     #Get json element for config
     $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))
+    
 
-    #Get json element to search for config ID
-    $destResponse = getFromDest -endpoint $configEndpoint
+    try
+    {
+        #Get json element to search for config ID
+        $destResponse = getFromDest -endpoint $configEndpoint
+        #get ID from Destination system to update config of same name to Source
+        $destID = getIdValue -apiResponse $destResponse -name $configName
+    }catch
+    {
+        Write-Host "Destination Get Error"
+    }
+
     #cleanUpRequest
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
     #put new json element for config
-    putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $destResponse -name $configName))
+    putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
 }
 
 
@@ -91,7 +101,7 @@ function putToDest ($endpoint, $parameters, $body)
     #Execute request against API
     executeRequest -request $builtRequest -method 'PUT' -headers $destHeaders -body $body
     #header clean up
-    $destHeaders.remove("Content-Type", "application/json")
+    $destHeaders.remove("Content-Type")
 }
 
 function putToSource( $endpoint, $parameters, $body)
@@ -107,7 +117,7 @@ function putToSource( $endpoint, $parameters, $body)
     #Execute request against API
     executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders -body $body
     #header clean up
-    $sourceHeaders.remove("Content-Type", "application/json")
+    $sourceHeaders.remove("Content-Type")
 }
 
 function getFromSource( $endpoint, $parameters)
