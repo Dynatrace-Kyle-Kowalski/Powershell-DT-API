@@ -2,16 +2,27 @@ $configName = 'MIGRATION'
 $config = 'anomalyDetection/hosts'
 
 <#API FRAME WORK SET UP START#>
-#Requried API inputs
-$isManaged = $FALSE
+#Try to read configs from json file
+try{
+    $fileParameters = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\migrations.json')
+}catch{
+    Write-Host "File Read Error"
+    BREAK
+}
+#Set DT managed flag for Request builder
+if ($fileParameters.isDTManaged -eq "False"){
+    $isManaged = $FALSE
+}else{
+    $isManaged = $TRUE
+}
 
-$sourceEnvironment = 'goy71950'
-$sourceDomain = 'live.dynatrace.com'
-$sourceToken = 'yRt9grsERkKTuFnn2oSeu'
+$sourceEnvironment = $fileParameters.source.Environment
+$sourceDomain = $fileParameters.source.Domain
+$sourceToken = $fileParameters.source.APIToken
 
-$destEnvironment = 'vkw74953'
-$destDomain = 'sprint.dynatracelabs.com'
-$destToken = 'XvhWZ00LRU27DkUmsyVBq'
+$destEnvironment = $fileParameters.destination.Environment
+$destDomain = $fileParameters.destination.Domain
+$destToken = $fileParameters.destination.APIToken
 
 #"Dynamic" Parameters
 $apiversion = 'v1'
