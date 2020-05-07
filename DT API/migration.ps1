@@ -29,10 +29,15 @@ $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 migrateRulesConfig -configEndpoint 'autoTags' -configName $tagName 
 
 <#FUNCTIONS LIST
+migrateRulesConfig ($configEndpoint, $configName)
 executeRequest ( $request , $method, $headers, $body )
 requestBuilder($endpoint, $parameters)
 getIdValue($apiResponse ,$name)
 getFromSource( $endpoint, $parameters)
+putToSource( $endpoint, $parameters, $body)
+getFromDest ($endpoint, $parameters)
+putToDest ($endpoint, $parameters, $body)
+cleanMetaData ($dirtyResponse)
 #>
 
 function migrateRulesConfig ($configEndpoint, $configName)
@@ -89,7 +94,7 @@ function putToDest ($endpoint, $parameters, $body)
     $destHeaders.remove("Content-Type", "application/json")
 }
 
-function putToSource( $endpoint, $parameters)
+function putToSource( $endpoint, $parameters, $body)
 {#get Configruation from source environment
     if (!$parameters)
     {
@@ -97,8 +102,12 @@ function putToSource( $endpoint, $parameters)
     }else{
         $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
     }
+    #Add Content-Type Header for API parsing
+    $sourceHeaders.Add("Content-Type", "application/json")
     #Execute request against API
-    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders 
+    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders -body $body
+    #header clean up
+    $sourceHeaders.remove("Content-Type", "application/json")
 }
 
 function getFromSource( $endpoint, $parameters)
