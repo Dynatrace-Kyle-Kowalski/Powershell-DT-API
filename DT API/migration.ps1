@@ -1,10 +1,15 @@
+#Endpoint to be used for migration
+$config = 'autoTags'
+#Name of the config to be moved
 $configName = 'MIGRATION'
-$config = 'anomalyDetection/hosts'
 
 <#API FRAME WORK SET UP START#>
+#Set API version to be used
+$apiversion = 'v1'
+
 #Try to read configs from json file
 try{
-    $fileParameters = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\migrations.json')
+    $fileParameters = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
 }catch{
     Write-Host "File Read Error"
     BREAK
@@ -15,17 +20,14 @@ if ($fileParameters.isDTManaged -eq "False"){
 }else{
     $isManaged = $TRUE
 }
-
+#Set up Source
 $sourceEnvironment = $fileParameters.source.Environment
 $sourceDomain = $fileParameters.source.Domain
 $sourceToken = $fileParameters.source.APIToken
-
+#Set up Destination
 $destEnvironment = $fileParameters.destination.Environment
 $destDomain = $fileParameters.destination.Domain
 $destToken = $fileParameters.destination.APIToken
-
-#"Dynamic" Parameters
-$apiversion = 'v1'
 
 #Create Header Object for request to use certian objects may add to this header
 $sourceHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
