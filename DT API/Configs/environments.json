@@ -2,7 +2,7 @@
     "source":{
        "Environment":"goy71950",
        "Domain":"live.dynatrace.com",
-       "APIToken":"L_SjRGXCSsCOVULxUvX5u",
+       "APIToken":" ",
        "MZPostfix":"Demo"
     },
     "destination":{
