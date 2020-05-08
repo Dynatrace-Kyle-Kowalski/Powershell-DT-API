@@ -21,13 +21,15 @@ if ($fileParameters.isDTManaged -eq "False"){
     $isManaged = $TRUE
 }
 #Set up Source
-$sourceEnvironment = $fileParameters.source.Environment
+$sourceDTEnvironment = $fileParameters.source.Environment
 $sourceDomain = $fileParameters.source.Domain
 $sourceToken = $fileParameters.source.APIToken
+$sourceMZPostfix = $fileParameters.source.MZPostfix
 #Set up Destination
-$destEnvironment = $fileParameters.destination.Environment
+$destDTEnvironment = $fileParameters.destination.Environment
 $destDomain = $fileParameters.destination.Domain
 $destToken = $fileParameters.destination.APIToken
+$destMZPostfix = $fileParameters.destination.MZPostfix
 
 #Create Header Object for request to use certian objects may add to this header
 $sourceHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
@@ -40,7 +42,9 @@ $destHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[Strin
 $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 <#API FRAME WORK SET UP END#>
 
-migrateIDConfig -configEndpoint $config -configName $configName 
+#migrateIDConfig -configEndpoint $config -configName $configName 
+
+migrateMZConfig -configEndpoint 'managementZones' -configName 'Template'
 
 <#FUNCTIONS LIST
 migrateIDConfig ($configEndpoint, $configName)
@@ -54,6 +58,53 @@ putToDest ($endpoint, $parameters, $body)
 cleanMetaData ($dirtyResponse)
 #>
 
+function migrateMZConfig ($configEndpoint, $configName){#Migration for rules that utilize a Dynatrace Hash ID
+    try{ 
+        #Get json element to search for config ID
+        $sourceResponse = getFromSource -endpoint $configEndpoint
+        #Get json element for config
+        $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))     
+    }catch{
+        Write-Host "Source Get Error"
+        BREAK
+    }
+
+    try{
+        <# 
+        destID would have strange implications migrating a MZ within the same DT environment 
+        #>
+        #Get json element to search for config ID
+        $destResponse = getFromDest -endpoint $configEndpoint
+        #get ID from Destination system to update config of same name to Source
+        $destID = getIdValue -apiResponse $destResponse -name $configName
+    }catch{
+        Write-Host "Destination Get Error"
+        BREAK
+    }
+    
+    #cleanUpRequest
+    $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
+
+    $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $sourceMZPostfix -dEnv $destMZPostfix
+    #TODO add function for changing environment tag
+
+
+    try{
+        #check for exisiting Config
+        if ($destID){#put new json in for config
+            putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
+        }else{#create new configuration 
+            postToDest -body $cleanBody -endpoint ($configEndpoint)
+        }
+    }catch{
+        Write-Host "Submission Error"
+    }
+    
+}
+
+function changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag
+    $mzConfig.rules.conditions 
+}
 function migrateIDConfig ($configEndpoint, $configName){#Migration for rules that utilize a Dynatrace Hash ID
     try{ 
         #Get json element to search for config ID
@@ -103,9 +154,9 @@ function executeRequest ( $request , $method, $headers, $body )
 function getFromDest ($endpoint, $parameters){#submit config to new environment
     if (!$parameters)
     {
-        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint 
+        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint 
     }else{
-        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint -parameters $parameters
     }
     #Execute request against API
     executeRequest -request $builtRequest -method 'GET' -headers $destHeaders 
@@ -113,9 +164,9 @@ function getFromDest ($endpoint, $parameters){#submit config to new environment
 
 function putToDest ($endpoint, $parameters, $body){#submit config to new environment
     if (!$parameters){
-        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint 
+        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint 
     }else{
-        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint -parameters $parameters
     }
     #Add Content-Type Header for API parsing
     $destHeaders.Add("Content-Type", "application/json")
@@ -127,9 +178,9 @@ function putToDest ($endpoint, $parameters, $body){#submit config to new environ
 
 function postToDest ($endpoint, $parameters, $body){#submit new config to new environment
     if (!$parameters){
-        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint 
+        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint 
     }else{
-        $builtRequest = requestBuilder -domain $destDomain -environment $destEnvironment -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint -parameters $parameters
     }
     #Add Content-Type Header for API parsing
     $destHeaders.Add("Content-Type", "application/json")
@@ -141,9 +192,9 @@ function postToDest ($endpoint, $parameters, $body){#submit new config to new en
 
 function putToSource( $endpoint, $parameters, $body){#get Configruation from source environment
     if (!$parameters){
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint 
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint 
     }else{
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint -parameters $parameters
     }
     #Add Content-Type Header for API parsing
     $sourceHeaders.Add("Content-Type", "application/json")
@@ -155,9 +206,9 @@ function putToSource( $endpoint, $parameters, $body){#get Configruation from sou
 
 function getFromSource( $endpoint, $parameters){#get Configruation from source environment
     if (!$parameters){
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint 
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint 
     }else{
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceEnvironment -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint -parameters $parameters
     }
     #Execute request against API
     executeRequest -request $builtRequest -method 'GET' -headers $sourceHeaders 

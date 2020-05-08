@@ -5,18 +5,18 @@ Powershell scripts to help with common Dynatrace API Tasks
 **migration.ps1**
 Migrate ID based configs from 1 environment to another 
 ### Usage
-Enter API information in environments json to designate which environments to migrate to
+Enter API information in environments.json to designate environmental propeties for API useage
 
 >***Environment***: 
- >   
- Managed Location : https://mangedDTDomain.com/e/**environmentID**
-  >  
+  
+ Managed Location : https://mangedDTDomain.com/e/ **environmentID**
+   
   Saas Location:     https://**environmentID**.live.dynatrace.com
 >***Domain***:
 
  Managed Location : https://**mangedDTDomain.com**/e/environmentID
 
-  Saas Location:     https://environmentID.**live.dynatrace.com**
+  Saas Location:     https://environmentID. **live.dynatrace.com**
 >***APIToken***:
  
 *Source Permissions*
