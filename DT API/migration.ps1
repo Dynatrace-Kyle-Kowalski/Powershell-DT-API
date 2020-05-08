@@ -76,7 +76,7 @@ function migrateMZConfig ($configEndpoint, $configName){#Migration for rules tha
         #Get json element to search for config ID
         $destResponse = getFromDest -endpoint $configEndpoint
         #get ID from Destination system to update config of same name to Source
-        $destID = getIdValue -apiResponse $destResponse -name $configName
+        #$destID = getIdValue -apiResponse $destResponse -name $configName
     }catch{
         Write-Host "Destination Get Error"
         BREAK
