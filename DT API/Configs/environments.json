@@ -1,0 +1,15 @@
+{
+    "source":{
+       "Environment":"goy71950",
+       "Domain":"live.dynatrace.com",
+       "APIToken":"L_SjRGXCSsCOVULxUvX5u",
+       "MZPostfix":"Demo"
+    },
+    "destination":{
+       "Environment":"vkw74953",
+       "Domain":"sprint.dynatracelabs.com",
+       "APIToken":"XvhWZ00LRU27DkUmsyVBq",
+       "MZPostfix":"Prod"
+    },
+    "isDTManaged":"False"
+}

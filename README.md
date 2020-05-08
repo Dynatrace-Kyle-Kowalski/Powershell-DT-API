@@ -1,7 +1,36 @@
 # Powershell-DT-API
 Powershell scripts to help with common Dynatrace API Tasks
 
-Current Functions
+## Current Functions
+**migration.ps1**
+Migrate ID based configs from 1 environment to another 
+### Usage
+Enter API information in environments.json to designate environmental propeties for API useage
 
+>***Environment***: 
+  
+ Managed Location : https://mangedDTDomain.com/e/ **environmentID**
+   
+  Saas Location:     https://**environmentID**.live.dynatrace.com
+>***Domain***:
 
-Migrate ID based configs from 1 environment to another (migration.ps1)
+ Managed Location : https://**mangedDTDomain.com**/e/environmentID
+
+  Saas Location:     https://environmentID. **live.dynatrace.com**
+>***APIToken***:
+ 
+*Source Permissions*
+   
+ ```
+ Read Configuration 
+ ```
+ 
+*Destination Permissions*
+```
+Read Configuration 
+Write Configuration
+```
+
+>***isDTManaged***
+
+Flag used to determine if environments are within a managed environment
