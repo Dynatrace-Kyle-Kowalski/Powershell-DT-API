@@ -1,5 +1,5 @@
 #Endpoint to be used for migration
-$config = 'autoTags'
+#$config = 'autoTags'
 #Name of the config to be moved
 $configName = 'MIGRATION'
 
@@ -86,7 +86,6 @@ function migrateMZConfig ($configEndpoint, $configName){#Migration for rules tha
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
 
     $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $sourceMZPostfix -dEnv $destMZPostfix
-    #TODO add function for changing environment tag
 
 
     try{
@@ -102,9 +101,18 @@ function migrateMZConfig ($configEndpoint, $configName){#Migration for rules tha
     
 }
 
-function changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag
-    $mzConfig.rules.conditions 
+function changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag 
+    #I'm sure there is a better way to do this but I don't know PS well enough
+    For($i=0;$i -lt $mzConfig.rules.Length; $i++){
+        For($j=0;$j -lt $mzConfig.rules[$i].conditions.Length;$j++){
+            if($mzConfig.rules[$i].conditions[$j].comparisonInfo.value.value -eq $sEnv){
+                $mzConfig.rules[$i].conditions[$j].comparisonInfo.value.value = $dEnv
+            }
+        }
+    }
+    $mzConfig
 }
+
 function migrateIDConfig ($configEndpoint, $configName){#Migration for rules that utilize a Dynatrace Hash ID
     try{ 
         #Get json element to search for config ID
