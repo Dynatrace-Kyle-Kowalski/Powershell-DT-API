@@ -1,15 +1,20 @@
 {
-    "source":{
+    "nonProd":{
        "Environment":"goy71950",
        "Domain":"live.dynatrace.com",
        "APIToken":"L_SjRGXCSsCOVULxUvX5u",
-       "MZPostfix":"Demo"
+       "isDTManaged":"False"
     },
-    "destination":{
-       "Environment":"goy71950",
-       "Domain":"live.dynatrace.com",
-       "APIToken":"L_SjRGXCSsCOVULxUvX5u",
-       "MZPostfix":"Beta"
+    "testing":{
+       "Environment":"vkw74953",
+       "Domain":"sprint.dynatracelabs.com",
+       "APIToken":"XvhWZ00LRU27DkUmsyVBq",
+       "isDTManaged":"False"
     },
-    "isDTManaged":"False"
+    "prod":{
+      "Environment":"wzj14229",
+      "Domain":"live.dynatrace.com",
+      "APIToken":"_",
+      "isDTManaged":"False"
+   }
 }

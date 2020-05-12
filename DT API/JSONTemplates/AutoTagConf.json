@@ -1,52 +1,52 @@
 {
-    "metadata": {
-      "configurationVersions": [
-        7
-      ],
-      "clusterVersion": "1.191.101.20200414-115902"
+  "metadata": {
+    "configurationVersions": [
+      7
+    ],
+    "clusterVersion": "1.191.101.20200414-115902"
+  },
+  "id": "81b3b993-1165-4ebb-8e2f-877da7ec1d5e5",
+  "name": "TAGNAME",
+  "rules": [
+    {
+      "type": "APPLICATION",
+      "enabled": true,
+      "valueFormat": "OPTIONAL VALUE",
+      "propagationTypes": [],
+      "conditions": [
+        {
+          "key": {
+            "attribute": "WEB_APPLICATION_NAME"
+          },
+          "comparisonInfo": {
+            "type": "STRING",
+            "operator": "CONTAINS",
+            "value": "Testing Value",
+            "negate": false,
+            "caseSensitive": true
+          }
+        }
+      ]
     },
-    "id": "81b3b993-1165-4ebb-8e2f-877da7ec1d5e5",
-    "name": "TAGNAME",
-    "rules": [
-      {
-        "type": "APPLICATION",
-        "enabled": true,
-        "valueFormat": "OPTIONAL VALUE",
-        "propagationTypes": [],
-        "conditions": [
-          {
-            "key": {
-              "attribute": "WEB_APPLICATION_NAME"
-            },
-            "comparisonInfo": {
-              "type": "STRING",
-              "operator": "CONTAINS",
-              "value": "Testing Value",
-              "negate": false,
-              "caseSensitive": true
-            }
+    {
+      "type": "APPLICATION",
+      "enabled": true,
+      "valueFormat": "Optional Name",
+      "propagationTypes": [],
+      "conditions": [
+        {
+          "key": {
+            "attribute": "WEB_APPLICATION_NAME"
+          },
+          "comparisonInfo": {
+            "type": "STRING",
+            "operator": "CONTAINS",
+            "value": "Testing 2",
+            "negate": false,
+            "caseSensitive": false
           }
-        ]
-      },
-      {
-        "type": "APPLICATION",
-        "enabled": true,
-        "valueFormat": "Optional Name",
-        "propagationTypes": [],
-        "conditions": [
-          {
-            "key": {
-              "attribute": "WEB_APPLICATION_NAME"
-            },
-            "comparisonInfo": {
-              "type": "STRING",
-              "operator": "CONTAINS",
-              "value": "Testing 2",
-              "negate": false,
-              "caseSensitive": false
-            }
-          }
-        ]
-      }
-    ]
-  }
+        }
+      ]
+    }
+  ]
+}

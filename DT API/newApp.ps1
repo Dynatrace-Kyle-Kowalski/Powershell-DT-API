@@ -1,53 +1,65 @@
 #Script to use to onboard a new application in Dynatrace SaaS
 
-#Requried API inputs
-$environment = 'vkw74953'
-$domain = 'sprint.dynatracelabs.com'
-$token = 'XvhWZ00LRU27DkUmsyVBq'
-
-#"Dynamic" Parameters
+<#API FRAME WORK SET UP START#>
+#Set API version to be used
 $apiversion = 'v1'
 
-<# Script Execution Start #>
+#Try to read configs from json file
+try{
+    $fileParameters = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
+}catch{
+    Write-Host "File Read Error"
+    BREAK
+}
+#Set DT managed flag for Request builder
+if ($fileParameters.isDTManaged -eq "False"){
+    $isManaged = $FALSE
+}else{
+    $isManaged = $TRUE
+}
+#Set up Source
+$sourceDTEnvironment = $fileParameters.source.Environment
+$sourceDomain = $fileParameters.source.Domain
+$sourceToken = $fileParameters.source.APIToken
 
 
 #Create Header Object for request to use certian objects may add to this header
-$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+$sourceHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 #Add Auth Header for API to use
-$headers.Add("Authorization", "Api-Token "+ $token)
+$sourceHeaders.Add("Authorization", "Api-Token "+ $sourceToken)
 
+<#API FRAME WORK SET UP END#>
 
-#build Auto Tags request
-$uri = '/autoTags/'
-$builtRequest = requestBuilder -endpoint $uri
-#Execute request against API
-$response = executeRequest -request $builtRequest -method 'GET' -headers $headers 
+$configEndpoint = 'autoTags'
 
-#Build AutoTag/ID request for configurations
-$entityID = getIdValue -apiResponse $response -name "service"
-$uri = '/autoTags/'+ $entityID
-$builtRequest = requestBuilder -endpoint $uri
-#Execute request against API
-$response = executeRequest -request $builtRequest -method 'GET' -headers $headers 
+#Get json element to search for config ID
+$sourceResponse = getFromSource -endpoint $configEndpoint
+#Get json element for config
+$sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))      
 
 #Set properties for adding rule object to config
-$response = addNewRule -sJson $response -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
+$response = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
 
 
 
 <# Script Execution End #>
 
-$response | ConvertTo-Json -Depth 24
 
 
 
 <#FUNCTIONS LIST
-addNewRule ($sJson, $entity, $condtionKey, $conditionValue)
+addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
+
+
 executeRequest ( $request , $method, $headers, $body )
 requestBuilder($endpoint, $parameters)
 getIdValue($apiResponse ,$name)
+getFromSource( $endpoint, $parameters)
+putToSource( $endpoint, $parameters, $body)
+
+
 #>
-function addNewRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
+function addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
 {#Format rules string to update an exisiting rule configuration
     if (!$optionalValue)
     {
