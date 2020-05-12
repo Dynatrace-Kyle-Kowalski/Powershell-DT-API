@@ -1,0 +1,15 @@
+{
+    "childObjects" : "2",
+    "rules":[
+        {
+            "endpoint": "autoTag",
+            "name": "template"
+        },
+        {
+            "endpoint": "managementZones",
+            "baseName": "Template",
+            "sourceEnvironment": "Demo",
+            "destintationEnvironment": "Prod"
+        }
+    ]
+}

@@ -44,7 +44,7 @@ $destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 
 #migrateIDConfig -configEndpoint $config -configName $configName 
 
-migrateMZConfig -configEndpoint 'managementZones' -configName 'Template'
+migrateMZConfig  -configName 'Template' -sEnv $sourceMZPostfix -dEnv $destMZPostfix
 
 <#FUNCTIONS LIST
 migrateIDConfig ($configEndpoint, $configName)
@@ -58,25 +58,22 @@ putToDest ($endpoint, $parameters, $body)
 cleanMetaData ($dirtyResponse)
 #>
 
-function migrateMZConfig ($configEndpoint, $configName){#Migration for rules that utilize a Dynatrace Hash ID
+function migrateMZConfig ($configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
     try{ 
         #Get json element to search for config ID
-        $sourceResponse = getFromSource -endpoint $configEndpoint
+        $sourceResponse = getFromSource -endpoint 'managementZones'
         #Get json element for config
-        $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))     
+        $sourceResponse = getFromSource -endpoint ('managementZones' + '/' + (getIdValue -apiResponse $sourceResponse -name ($configName + ' - ' + $sEnv.ToUpper())))     
     }catch{
         Write-Host "Source Get Error"
         BREAK
     }
 
     try{
-        <# 
-        destID would have strange implications migrating a MZ within the same DT environment 
-        #>
         #Get json element to search for config ID
-        $destResponse = getFromDest -endpoint $configEndpoint
+        $destResponse = getFromDest -endpoint 'managementZones'
         #get ID from Destination system to update config of same name to Source
-        #$destID = getIdValue -apiResponse $destResponse -name $configName
+        $destID = getIdValue -apiResponse $destResponse -name ($configName + ' - ' + $dEnv.ToUpper())
     }catch{
         Write-Host "Destination Get Error"
         BREAK
@@ -85,15 +82,15 @@ function migrateMZConfig ($configEndpoint, $configName){#Migration for rules tha
     #cleanUpRequest
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
 
-    $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $sourceMZPostfix -dEnv $destMZPostfix
-
+    $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $sEnv -dEnv $dEnv
+    $cleanBody.name = $configName + ' - ' + $dEnv.ToUpper()
 
     try{
         #check for exisiting Config
         if ($destID){#put new json in for config
-            putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
+            putToDest -body $cleanBody -endpoint ('managementZones' + '/' + $destID)
         }else{#create new configuration 
-            postToDest -body $cleanBody -endpoint ($configEndpoint)
+            postToDest -body $cleanBody -endpoint ('managementZones')
         }
     }catch{
         Write-Host "Submission Error"
@@ -105,7 +102,7 @@ function changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag
     #I'm sure there is a better way to do this but I don't know PS well enough
     For($i=0;$i -lt $mzConfig.rules.Length; $i++){
         For($j=0;$j -lt $mzConfig.rules[$i].conditions.Length;$j++){
-            if($mzConfig.rules[$i].conditions[$j].comparisonInfo.value.value -eq $sEnv){
+            if($mzConfig.rules[$i].conditions[$j].comparisonInfo.value.value -ieq $sEnv){
                 $mzConfig.rules[$i].conditions[$j].comparisonInfo.value.value = $dEnv
             }
         }
