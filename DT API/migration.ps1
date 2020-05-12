@@ -1,79 +1,65 @@
-#Endpoint to be used for migration
-#$config = 'autoTags'
-#Name of the config to be moved
-$configName = 'MIGRATION'
+#DT Enironments to be used in migration
 
 <#API FRAME WORK SET UP START#>
 #Set API version to be used
 $apiversion = 'v1'
 
 #Try to read configs from json file
+#\Documents\Code\Powershell
 try{
-    $fileParameters = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
+    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
+    $migrations = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\migration.json')
 }catch{
     Write-Host "File Read Error"
     BREAK
 }
-#Set DT managed flag for Request builder
-if ($fileParameters.isDTManaged -eq "False"){
-    $isManaged = $FALSE
-}else{
-    $isManaged = $TRUE
-}
-#Set up Source
-$sourceDTEnvironment = $fileParameters.source.Environment
-$sourceDomain = $fileParameters.source.Domain
-$sourceToken = $fileParameters.source.APIToken
-$sourceMZPostfix = $fileParameters.source.MZPostfix
-#Set up Destination
-$destDTEnvironment = $fileParameters.destination.Environment
-$destDomain = $fileParameters.destination.Domain
-$destToken = $fileParameters.destination.APIToken
-$destMZPostfix = $fileParameters.destination.MZPostfix
 
-#Create Header Object for request to use certian objects may add to this header
-$sourceHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-#Add Auth Header for API to use
-$sourceHeaders.Add("Authorization", "Api-Token "+ $sourceToken)
-
-#Create Header Object for request to use certian objects may add to this header
-$destHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-#Add Auth Header for API to use
-$destHeaders.Add("Authorization", "Api-Token "+ $destToken)
 <#API FRAME WORK SET UP END#>
 
-#migrateIDConfig -configEndpoint $config -configName $configName 
+For ($i=0;$i -lt $migrations.rules.Length;$i++){
 
-migrateMZConfig  -configName 'Template' -sEnv $sourceMZPostfix -dEnv $destMZPostfix
+    $sEnv = getEnvironment -rule $migrations.rules[$i].sEnv
+    $dEnv = getEnvironment -rule $migrations.rules[$i].dEnv
+
+    if($migrations.rules[$i].endpoint -eq "managementZones"){
+        migrateMZConfig -rules $migrations.rules[$i] -sEnv $sEnv -dEnv $dEnv 
+    }else{
+        migrateIDConfig -configEndpoint $migrations.rules[$i].endpoint -configName $migrations.rules[$i].name -sEnv $sEnv -dEnv $dEnv 
+    }
+}
+
 
 <#FUNCTIONS LIST
 migrateIDConfig ($configEndpoint, $configName)
-executeRequest ( $request , $method, $headers, $body )
-requestBuilder($endpoint, $parameters)
-getIdValue($apiResponse ,$name)
-getFromSource( $endpoint, $parameters)
-putToSource( $endpoint, $parameters, $body)
-getFromDest ($endpoint, $parameters)
-putToDest ($endpoint, $parameters, $body)
-cleanMetaData ($dirtyResponse)
+migrateMZConfig ($rules, $sEnv, $dEnv)
+
+getEnvironment ($rule){#retrieve which dynatrace environment to be used
+function executeRequest ( $request , $method, $headers, $body ){ #Execute api requests
+postToDtEnv ($dtEnv, $endpoint, $parameters, $body){#submit new config to Dynatrace environment
+putToDTEnv($dtEnv, $endpoint, $parameters, $body){#get Configruation from Dynatrace environment
+getFromDTEnv($dtEnv, $endpoint, $parameters){#get Configruation from Dynatrace environment
+requestBuilder($endpoint, $parameters, $environment){#build string based on variables for script flexibility
+changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag 
+cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
+getIdValue($apiResponse ,$name){#Query the ID list to find the id needed
 #>
 
-function migrateMZConfig ($configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
+function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for management zones between environments
     try{ 
         #Get json element to search for config ID
-        $sourceResponse = getFromSource -endpoint 'managementZones'
+        $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint 'managementZones'
         #Get json element for config
-        $sourceResponse = getFromSource -endpoint ('managementZones' + '/' + (getIdValue -apiResponse $sourceResponse -name ($configName + ' - ' + $sEnv.ToUpper())))     
+        $sourceResponse = getFromDTEnv -dtEnv $sEnv  -endpoint ('managementZones' + '/' + (getIdValue -apiResponse $sourceResponse -name ($rules.name + ' - ' + $rules.sEnv.ToUpper())))     
     }catch{
-        Write-Host "Source Get Error"
+        Write-Host "Source Get Error - MZ"
         BREAK
     }
 
     try{
         #Get json element to search for config ID
-        $destResponse = getFromDest -endpoint 'managementZones'
+        $destResponse = getFromDTEnv -dtEnv $dEnv -endpoint 'managementZones'
         #get ID from Destination system to update config of same name to Source
-        $destID = getIdValue -apiResponse $destResponse -name ($configName + ' - ' + $dEnv.ToUpper())
+        $destID = getIdValue -apiResponse $destResponse -name ($rules.name + ' - ' + $rules.dEnv.ToUpper())
     }catch{
         Write-Host "Destination Get Error"
         BREAK
@@ -82,15 +68,15 @@ function migrateMZConfig ($configName, $sEnv, $dEnv){#Migration for rules that u
     #cleanUpRequest
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
 
-    $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $sEnv -dEnv $dEnv
-    $cleanBody.name = $configName + ' - ' + $dEnv.ToUpper()
+    $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $rules.sEnv -dEnv $rules.dEnv
+    $cleanBody.name = ($rules.name + ' - ' + $rules.dEnv.ToUpper())
 
     try{
         #check for exisiting Config
         if ($destID){#put new json in for config
-            putToDest -body $cleanBody -endpoint ('managementZones' + '/' + $destID)
+            putToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('managementZones' + '/' + $destID)
         }else{#create new configuration 
-            postToDest -body $cleanBody -endpoint ('managementZones')
+            postToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('managementZones')
         }
     }catch{
         Write-Host "Submission Error"
@@ -98,6 +84,135 @@ function migrateMZConfig ($configName, $sEnv, $dEnv){#Migration for rules that u
     
 }
 
+function migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
+    $sourceResponse = $null
+    $destResponse = $null
+    $destID = $null
+    $cleanBody = $null
+
+    try{ 
+        #Get json element to search for config ID
+        $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint
+        #Get json element for config
+        $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))     
+    }catch{
+        Write-Host "Source Get Error" + $sourceResponse
+        BREAK
+    }
+
+    try{
+        #Get json element to search for config ID
+        $destResponse = getFromDTEnv -dtEnv $dEnv  -endpoint $configEndpoint
+        #get ID from Destination system to update config of same name to Source
+        $destID = getIdValue -apiResponse $destResponse -name $configName
+    }catch{
+        Write-Host "Destination Get Error" + $destResponse
+        BREAK
+    }
+
+    #cleanUpRequest
+    $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
+    try{
+        #check for exisiting Config
+        if ($destID){#put new json in for config
+            putToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
+        }else{#create new configuration 
+            postToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ($configEndpoint)
+        }
+    }catch{
+        Write-Host "Submission Error"
+    }
+    
+}
+
+function getEnvironment ($rule){#retrieve which dynatrace environment to be used
+    if($rule -ieq "Prod"){
+        return $environments.prod
+    }elseif ($rule -eq "DTTesting"){
+        return $environments.testing
+    }else{
+        return $environments.nonProd
+    }
+}
+
+function executeRequest ( $request , $method, $headers, $body ){ #Execute api requests
+    #Write-Host $request
+    if($body){ #check for body which should be a powershell object
+        $body = ConvertTo-Json -depth 24 -InputObject $body
+    }
+    Invoke-RestMethod $request -Method $method -Headers $headers -Body $body   
+} 
+
+function postToDtEnv ($dtEnv, $endpoint, $parameters, $body){#submit new config to Dynatrace environment
+    if (!$parameters){
+        $builtRequest = requestBuilder  -environment $dtEnv -endpoint $endpoint 
+    }else{
+        $builtRequest = requestBuilder  -environment $dtEnv -endpoint $endpoint -parameters $parameters
+    }
+
+    #Add HTTP Headders
+    $requestHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+    $requestHeaders.Add("Authorization", "Api-Token "+ $dtEnv.APIToken)
+    $requestHeaders.Add("Content-Type", "application/json")
+    #Execute request against API
+    $return = executeRequest -request $builtRequest -method 'POST' -headers $requestHeaders -body $body
+    #header clean up
+    $requestHeaders.remove("Content-Type")
+    $requestHeaders.remove("Authorization")
+    return $return
+}
+
+function putToDTEnv($dtEnv, $endpoint, $parameters, $body){#get Configruation from Dynatrace environment
+    if (!$parameters){
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint 
+    }else{
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -parameters $parameters
+    }
+
+    #Add Headers
+    $requestHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+    $requestHeaders.Add("Authorization", "Api-Token "+ $dtEnv.APIToken)
+    $requestHeaders.Add("Content-Type", "application/json")
+    #Execute request against API
+    $return = executeRequest -request $builtRequest -method 'PUT' -headers $requestHeaders -body $body
+    #header clean up
+    $requestHeaders.remove("Content-Type")
+    $requestHeaders.remove("Authorization")
+    return $return
+}
+
+function getFromDTEnv($dtEnv, $endpoint, $parameters){#get Configruation from Dynatrace environment
+    if (!$parameters){
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint 
+    }else{
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -parameters $parameters
+    }
+    #Add Headers
+    $requestHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+    $requestHeaders.Add("Authorization", "Api-Token "+ $dtEnv.APIToken)
+    #Execute request against API
+    $return = executeRequest -request $builtRequest -method 'GET' -headers $requestHeaders
+    #header clean up
+    #$requestHeaders.remove("Authorization")
+    return $return
+}
+
+function requestBuilder($endpoint, $parameters, $environment){#build string based on variables for script flexibility
+    
+    if($environment.isDTManaged -ieq "True"){
+        if (!$parameters){
+            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + '/' + $endpoint
+        }else {
+            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + '/' + $endpoint + "?" + $parameters
+        }
+    }else{
+        if (!$parameters){
+            'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion + '/' + $endpoint
+        }else {
+            'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+        }
+    }
+}
 function changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag 
     #I'm sure there is a better way to do this but I don't know PS well enough
     For($i=0;$i -lt $mzConfig.rules.Length; $i++){
@@ -109,133 +224,6 @@ function changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag
     }
     $mzConfig
 }
-
-function migrateIDConfig ($configEndpoint, $configName){#Migration for rules that utilize a Dynatrace Hash ID
-    try{ 
-        #Get json element to search for config ID
-        $sourceResponse = getFromSource -endpoint $configEndpoint
-        #Get json element for config
-        $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))     
-    }catch{
-        Write-Host "Source Get Error"
-        BREAK
-    }
-
-    try{
-        #Get json element to search for config ID
-        $destResponse = getFromDest -endpoint $configEndpoint
-        #get ID from Destination system to update config of same name to Source
-        $destID = getIdValue -apiResponse $destResponse -name $configName
-    }catch{
-        Write-Host "Destination Get Error"
-        BREAK
-    }
-
-    #cleanUpRequest
-    $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
-    try{
-        #check for exisiting Config
-        if ($destID){#put new json in for config
-            putToDest -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)
-        }else{#create new configuration 
-            postToDest -body $cleanBody -endpoint ($configEndpoint)
-        }
-    }catch{
-        Write-Host "Submission Error"
-    }
-    
-}
-
-
-function executeRequest ( $request , $method, $headers, $body )
-{ #Execute api requests
-    #Write-Host $request
-    if($body){ #check for body which should be a powershell object
-        $body = ConvertTo-Json -depth 24 -InputObject $body
-    }
-    Invoke-RestMethod $request -Method $method -Headers $headers -Body $body   
-} 
-
-function getFromDest ($endpoint, $parameters){#submit config to new environment
-    if (!$parameters)
-    {
-        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint 
-    }else{
-        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint -parameters $parameters
-    }
-    #Execute request against API
-    executeRequest -request $builtRequest -method 'GET' -headers $destHeaders 
-}
-
-function putToDest ($endpoint, $parameters, $body){#submit config to new environment
-    if (!$parameters){
-        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint 
-    }else{
-        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint -parameters $parameters
-    }
-    #Add Content-Type Header for API parsing
-    $destHeaders.Add("Content-Type", "application/json")
-    #Execute request against API
-    executeRequest -request $builtRequest -method 'PUT' -headers $destHeaders -body $body
-    #header clean up
-    $destHeaders.remove("Content-Type")
-}
-
-function postToDest ($endpoint, $parameters, $body){#submit new config to new environment
-    if (!$parameters){
-        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint 
-    }else{
-        $builtRequest = requestBuilder -domain $destDomain -environment $destDTEnvironment -endpoint $endpoint -parameters $parameters
-    }
-    #Add Content-Type Header for API parsing
-    $destHeaders.Add("Content-Type", "application/json")
-    #Execute request against API
-    executeRequest -request $builtRequest -method 'POST' -headers $destHeaders -body $body
-    #header clean up
-    $destHeaders.remove("Content-Type")
-}
-
-function putToSource( $endpoint, $parameters, $body){#get Configruation from source environment
-    if (!$parameters){
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint 
-    }else{
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint -parameters $parameters
-    }
-    #Add Content-Type Header for API parsing
-    $sourceHeaders.Add("Content-Type", "application/json")
-    #Execute request against API
-    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders -body $body
-    #header clean up
-    $sourceHeaders.remove("Content-Type")
-}
-
-function getFromSource( $endpoint, $parameters){#get Configruation from source environment
-    if (!$parameters){
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint 
-    }else{
-        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint -parameters $parameters
-    }
-    #Execute request against API
-    executeRequest -request $builtRequest -method 'GET' -headers $sourceHeaders 
-}
-
-function requestBuilder($endpoint, $parameters, $environment, $domain){#build string based on variables for script flexibility
-    
-    if($isManaged){
-        if (!$parameters){
-            'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint
-        }else {
-            'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint + "?" + $parameters
-        }
-    }else{
-        if (!$parameters){
-            'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + '/' + $endpoint
-        }else {
-            'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
-        }
-    }
-}
-
 function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
     $dirtyResponse.psobject.properties.remove('metadata')
     $dirtyResponse.psobject.properties.remove('id')

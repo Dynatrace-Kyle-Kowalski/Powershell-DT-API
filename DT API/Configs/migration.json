@@ -1,0 +1,22 @@
+{
+    "rules":[
+        {
+            "endpoint": "autoTags",
+            "name": "Migration Test",
+            "sEnv": "Demo",
+            "dEnv": "DTTesting"
+        },
+        {
+            "endpoint": "managementZones",
+            "name": "Template",
+            "sEnv": "Demo",
+            "dEnv": "DTTesting"
+        },
+        {
+            "endpoint": "autoTags",
+            "name": "Tier",
+            "sEnv": "Demo",
+            "dEnv": "DTTesting"
+        }
+    ]
+}

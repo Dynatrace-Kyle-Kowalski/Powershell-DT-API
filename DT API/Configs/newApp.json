@@ -1,0 +1,34 @@
+{
+    "tags" : [
+        {
+            "Name": "CherwellCategory",
+            "Value": "Loan Application Services"
+        },
+        {
+            "Name": "CherwellService",
+            "Value": "Loan Application Services"
+        },
+        {
+            "Name": "CherwellSystem",
+            "Value": "Loanliner.com"
+        },
+        {
+            "Name": "CherwellTeam",
+            "Value": "Business Facing 1"
+        }
+    ],
+    "conditions" : [
+        {
+            "key": "HOST_GROUP_NAME / IIS APP Pool Name",
+            "value": "CMRS"
+        },
+        {
+            "key": "DB Name",
+            "Value": "LoanlinerProd"
+        },
+        {
+            "key": "Web App Name",
+            "value": "Loanliner.com"
+        }
+    ]
+}
