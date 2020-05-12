@@ -91,27 +91,59 @@ function addNewRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalVa
     $newRules = $sJson.rules += $newRules
 }
 
-
 function executeRequest ( $request , $method, $headers, $body )
 { #Execute api requests
     #Write-Host $request
+    if($body){ #check for body which should be a powershell object
+        $body = ConvertTo-Json -depth 24 -InputObject $body
+    }
     Invoke-RestMethod $request -Method $method -Headers $headers -Body $body   
 } 
 
-function requestBuilder($endpoint, $parameters)
-{#build string based on variables for script flexibility
-    if (!$parameters)
-    {
-        'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint
-    }else {
-        'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+
+function putToSource( $endpoint, $parameters, $body){#get Configruation from source environment
+    if (!$parameters){
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint 
+    }else{
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint -parameters $parameters
     }
-    
+    #Add Content-Type Header for API parsing
+    $sourceHeaders.Add("Content-Type", "application/json")
+    #Execute request against API
+    executeRequest -request $builtRequest -method 'PUT' -headers $sourceHeaders -body $body
+    #header clean up
+    $sourceHeaders.remove("Content-Type")
 }
 
-function getIdValue($apiResponse ,$name)
-{#Query the ID list to find the id needed
+function getFromSource( $endpoint, $parameters){#get Configruation from source environment
+    if (!$parameters){
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint 
+    }else{
+        $builtRequest = requestBuilder -domain $sourceDomain -environment $sourceDTEnvironment -endpoint $endpoint -parameters $parameters
+    }
+    #Execute request against API
+    executeRequest -request $builtRequest -method 'GET' -headers $sourceHeaders 
+}
+
+function requestBuilder($endpoint, $parameters, $environment, $domain){#build string based on variables for script flexibility
+    
+    if($isManaged){
+        if (!$parameters){
+            'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint
+        }else {
+            'https://' + $domain + '/e/' + $environment + '/api/config/' + $apiversion + '/' + $endpoint + "?" + $parameters
+        }
+    }else{
+        if (!$parameters){
+            'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + '/' + $endpoint
+        }else {
+            'https://' + $environment + '.' + $domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+        }
+    }
+}
+
+function getIdValue($apiResponse ,$name){#Query the ID list to find the id needed
     #Write-Host $apiResponse
-    $return = $apiResponse.values | Where-Object {$_.name -eq $name}
-    $return.id
+    $idReturn = $apiResponse.values | Where-Object {$_.name -eq $name}
+    $idReturn.id
 }

@@ -1,9 +1,8 @@
 {
-    "childObjects" : "2",
     "rules":[
         {
             "endpoint": "autoTag",
-            "name": "template"
+            "name": "Migration Test"
         },
         {
             "endpoint": "managementZones",
