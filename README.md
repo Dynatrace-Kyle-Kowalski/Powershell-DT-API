@@ -38,7 +38,7 @@ Iterative list of all changes to be made
 
 >***Endpoint***
 
-What config to migrate over. NOTE this is the URI of the config api without the trailing slash
+What config to migrate over
 
 >***Name***
 

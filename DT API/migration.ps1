@@ -30,8 +30,8 @@ For ($i=0;$i -lt $migrations.rules.Length;$i++){
 
 
 <#FUNCTIONS LIST
-migrateIDConfig ($configEndpoint, $configName)
-migrateMZConfig ($rules, $sEnv, $dEnv)
+migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
+migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for management zones between environments
 
 getEnvironment ($rule){#retrieve which dynatrace environment to be used
 function executeRequest ( $request , $method, $headers, $body ){ #Execute api requests
@@ -201,13 +201,13 @@ function requestBuilder($endpoint, $parameters, $environment){#build string base
     
     if($environment.isDTManaged -ieq "True"){
         if (!$parameters){
-            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + '/' + $endpoint
+            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint
         }else {
-            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + '/' + $endpoint + "?" + $parameters
+            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
         }
     }else{
         if (!$parameters){
-            'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion + '/' + $endpoint
+            'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion  + $endpoint
         }else {
             'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
         }
