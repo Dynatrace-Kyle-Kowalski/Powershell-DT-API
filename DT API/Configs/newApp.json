@@ -10,7 +10,7 @@
         },
         {
             "Name": "CherwellSystem",
-            "Value": "Loanliner.com"
+            "Value": "System Name"
         },
         {
             "Name": "CherwellTeam",
@@ -20,15 +20,15 @@
     "conditions" : [
         {
             "key": "HOST_GROUP_NAME / IIS APP Pool Name",
-            "value": "CMRS"
+            "value": "App Pool"
         },
         {
             "key": "DB Name",
-            "Value": "LoanlinerProd"
+            "Value": "DB Name"
         },
         {
             "key": "Web App Name",
-            "value": "Loanliner.com"
+            "value": "App Domain"
         }
     ]
 }
