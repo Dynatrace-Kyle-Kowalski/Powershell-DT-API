@@ -1,14 +1,14 @@
 {
     "nonProd":{
-       "Environment":"goy71950",
+       "Environment":"abc12345",
        "Domain":"live.dynatrace.com",
        "APIToken":"-",
        "isDTManaged":"False"
     },
     "prod":{
-      "Environment":"wzj14229",
-      "Domain":"live.dynatrace.com",
+      "Environment":"abcd1-asdfqw-2134",
+      "Domain":"xxx.dynatrace-managed.com",
       "APIToken":"-",
-      "isDTManaged":"False"
+      "isDTManaged":"True"
    }
 }
