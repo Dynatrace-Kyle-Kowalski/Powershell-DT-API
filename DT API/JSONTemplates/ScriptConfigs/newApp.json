@@ -1,0 +1,34 @@
+{
+    "tags" : [
+        {
+            "Name": "CherwellCategory",
+            "Value": "Loan Application Services"
+        },
+        {
+            "Name": "CherwellService",
+            "Value": "Loan Application Services"
+        },
+        {
+            "Name": "CherwellSystem",
+            "Value": "System"
+        },
+        {
+            "Name": "CherwellTeam",
+            "Value": "Business Facing 1"
+        }
+    ],
+    "conditions" : [
+        {
+            "key": "HOST_GROUP_NAME / IIS APP Pool Name",
+            "value": "Sytem"
+        },
+        {
+            "key": "DB Name",
+            "Value": "Name"
+        },
+        {
+            "key": "Web App Name",
+            "value": "Domain"
+        }
+    ]
+}
