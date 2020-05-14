@@ -38,7 +38,7 @@ $sourceResponse = getFromSource -endpoint $configEndpoint
 $sourceResponse = getFromSource -endpoint ($configEndpoint + '/' + (getIdValue -apiResponse $sourceResponse -name $configName))      
 
 #Set properties for adding rule object to config
-$response = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
+$sourceResponse = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey "HOST_GROUP_NAME"  -conditionValue "FunctionTest"
 
 
 
