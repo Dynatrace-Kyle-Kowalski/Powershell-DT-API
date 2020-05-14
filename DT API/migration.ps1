@@ -16,19 +16,6 @@ try{
 
 <#API FRAME WORK SET UP END#>
 
-For ($i=0;$i -lt $migrations.rules.Length;$i++){
-
-    $sEnv = getEnvironment -rule $migrations.rules[$i].sEnv
-    $dEnv = getEnvironment -rule $migrations.rules[$i].dEnv
-
-    if($migrations.rules[$i].endpoint -eq "managementZones"){
-        migrateMZConfig -rules $migrations.rules[$i] -sEnv $sEnv -dEnv $dEnv 
-    }else{
-        migrateIDConfig -configEndpoint $migrations.rules[$i].endpoint -configName $migrations.rules[$i].name -sEnv $sEnv -dEnv $dEnv 
-    }
-}
-
-
 <#FUNCTIONS LIST
 migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
 migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for management zones between environments
@@ -47,9 +34,9 @@ getIdValue($apiResponse ,$name){#Query the ID list to find the id needed
 function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for management zones between environments
     try{ 
         #Get json element to search for config ID
-        $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint 'managementZones'
+        $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint '/managementZones'
         #Get json element for config
-        $sourceResponse = getFromDTEnv -dtEnv $sEnv  -endpoint ('managementZones' + '/' + (getIdValue -apiResponse $sourceResponse -name ($rules.name + ' - ' + $rules.sEnv.ToUpper())))     
+        $sourceResponse = getFromDTEnv -dtEnv $sEnv  -endpoint ('/managementZones' + '/' + (getIdValue -apiResponse $sourceResponse -name ($rules.name + ' - ' + $rules.sEnv.ToUpper())))     
     }catch{
         Write-Host "Source Get Error - MZ"
         BREAK
@@ -57,7 +44,7 @@ function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for managem
 
     try{
         #Get json element to search for config ID
-        $destResponse = getFromDTEnv -dtEnv $dEnv -endpoint 'managementZones'
+        $destResponse = getFromDTEnv -dtEnv $dEnv -endpoint '/managementZones'
         #get ID from Destination system to update config of same name to Source
         $destID = getIdValue -apiResponse $destResponse -name ($rules.name + ' - ' + $rules.dEnv.ToUpper())
     }catch{
@@ -74,12 +61,12 @@ function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for managem
     try{
         #check for exisiting Config
         if ($destID){#put new json in for config
-            putToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('managementZones' + '/' + $destID)
+            putToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('/managementZones' + '/' + $destID)
         }else{#create new configuration 
-            postToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('managementZones')
+            postToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('/managementZones')
         }
     }catch{
-        Write-Host "Submission Error"
+        Write-Host "Submission Error - MZ"
     }
     
 }
@@ -234,4 +221,19 @@ function getIdValue($apiResponse ,$name){#Query the ID list to find the id neede
     #Write-Host $apiResponse
     $idReturn = $apiResponse.values | Where-Object {$_.name -eq $name}
     $idReturn.id
+}
+
+
+<#Functions End#>
+
+For ($i=0;$i -lt $migrations.rules.Length;$i++){
+
+    $sEnv = getEnvironment -rule $migrations.rules[$i].sEnv
+    $dEnv = getEnvironment -rule $migrations.rules[$i].dEnv
+
+    if($migrations.rules[$i].endpoint -eq "/managementZones"){
+        migrateMZConfig -rules $migrations.rules[$i] -sEnv $sEnv -dEnv $dEnv 
+    }else{
+        migrateIDConfig -configEndpoint $migrations.rules[$i].endpoint -configName $migrations.rules[$i].name -sEnv $sEnv -dEnv $dEnv 
+    }
 }

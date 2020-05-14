@@ -1,0 +1,14 @@
+{
+    "nonProd":{
+       "Environment":"abc12345",
+       "Domain":"live.dynatrace.com",
+       "APIToken":"-",
+       "isDTManaged":"False"
+    },
+    "prod":{
+      "Environment":"abcd1-asdfqw-2134",
+      "Domain":"xxx.dynatrace-managed.com",
+      "APIToken":"-",
+      "isDTManaged":"True"
+   }
+}
