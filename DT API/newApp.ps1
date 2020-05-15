@@ -200,12 +200,15 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
     $sEnv = $environments.testing
 
     try{ 
+
+        #TODO CHECK IF TAG EXISIT IF NOT WE NEED TO MAKE ONE
+
         #Get json element to search for config ID
         $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $newApp.tags[$i].Name
         #Get json element for config
         $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint ($configEndpoint + '/' + $sourceID)     
     }catch{
-        Write-Host "Source Get Error" + $sourceResponse
+        Write-Host "Source Get Error -"  $sourceResponse
         BREAK
     }
 
@@ -217,11 +220,15 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
                 $key = createKey -type $newApp.conditions[$j].key
                 #Set properties for adding rule object to config
                 $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
+                $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_SERVICE"
+                $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_HOST"
             }
             "AppPool"{
                 $key = createKey -type $newApp.conditions[$j].key
                 #Set properties for adding rule object to config
                 $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key  -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
+                $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_SERVICE"
+                $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_HOST"
             }
             "WebApp"{
                 $key = createKey -type $newApp.conditions[$j].key
@@ -235,7 +242,7 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
             }
             default{
                 Write-Host "Unsupported Rule"
-                break;
+                break
             }
         }
         #submit config back into system

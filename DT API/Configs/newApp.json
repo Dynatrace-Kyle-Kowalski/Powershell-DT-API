@@ -15,14 +15,6 @@
             "value": "TST"
         },
         {
-            "key": "DBName",
-            "Value": "Testing"
-        },
-        {
-            "key": "WebApp",
-            "value": "easyTravel.com"
-        },
-        {
             "key": "AppPool",
             "value": "easyTravel"
         }

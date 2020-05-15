@@ -1,5 +1,5 @@
 Look in templates directory for examples of these files
-### environment.json
+## environment.json
 Enter API information in environments.json to designate environmental propeties for API useage
 
 >***Environment***: 
@@ -25,7 +25,7 @@ Flag used to determine if environments are within a managed environment
 
 
 
-### migration.json
+## migration.json
 
 >***Rules***
 
@@ -46,3 +46,15 @@ Source environment to be used. If this value is prod it will go to the prod envi
 >***dEnv***
 
 Destination environment to be used. If this value is prod it will go to the prod environment listed in the environments.json otherwise it will default to non-prod
+
+
+
+## newApp.json
+
+>***tags***
+
+list of tags to add to environment 
+
+>***conditions***
+
+set of conditions needed for tags above. Current key values supported {HostGroup,DBName, WebApp, AppPool}
