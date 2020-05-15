@@ -1,34 +1,30 @@
 {
     "tags" : [
         {
-            "Name": "CherwellCategory",
-            "Value": "Loan Application Services"
+            "Name": "testing",
+            "Value": "my cool value"
         },
         {
-            "Name": "CherwellService",
-            "Value": "Loan Application Services"
-        },
-        {
-            "Name": "CherwellSystem",
-            "Value": "Loanliner.com"
-        },
-        {
-            "Name": "CherwellTeam",
-            "Value": "Business Facing 1"
+            "Name": "test 2",
+            "Value": "it works"
         }
     ],
     "conditions" : [
         {
-            "key": "HOST_GROUP_NAME / IIS APP Pool Name",
-            "value": "CMRS"
+            "key": "HostGroup",
+            "value": "TST"
         },
         {
-            "key": "DB Name",
-            "Value": "LoanlinerProd"
+            "key": "DBName",
+            "Value": "Testing"
         },
         {
-            "key": "Web App Name",
-            "value": "Loanliner.com"
+            "key": "WebApp",
+            "value": "easyTravel.com"
+        },
+        {
+            "key": "AppPool",
+            "value": "easyTravel"
         }
     ]
 }
