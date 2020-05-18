@@ -1,12 +1,16 @@
 {
     "tags" : [
         {
-            "Name": "testing",
-            "Value": "my cool value"
+            "Name": "CherwellService",
+            "Value": "ITSM Demo"
         },
         {
-            "Name": "test 2",
-            "Value": "it works"
+            "Name": "CherwellTeam",
+            "Value": "ITSM Demo"
+        },
+        {
+            "Name": "CherwellCategory",
+            "Value": "ITSM Demo"
         }
     ],
     "conditions" : [
@@ -16,7 +20,15 @@
         },
         {
             "key": "AppPool",
-            "value": "easyTravel"
+            "value": "IIS App Pool"
+        },
+        {
+            "key": "WebApp",
+            "value": "webapplication.com"
+        },
+        {
+            "key": "DBName",
+            "value": "Database"
         }
     ]
 }

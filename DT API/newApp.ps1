@@ -201,14 +201,29 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
 
     try{ 
 
-        #TODO CHECK IF TAG EXISIT IF NOT WE NEED TO MAKE ONE
 
         #Get json element to search for config ID
         $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $newApp.tags[$i].Name
+        $name = $newApp.tags[$i].Name
+
+        if($null -eq $sourceID){
+            #format new tag Json
+            $newTag =  ConvertFrom-Json -InputObject @"
+            {
+                "name" : "$name",
+                "rules" : []
+            }
+"@
+            #create new tag value
+            $sourceID = postToDTEnv -dtEnv $sEnv -body $newTag -endpoint ($configEndpoint)
+            #get new id
+            $sourceID = $sourceID.id 
+        }
+
         #Get json element for config
         $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint ($configEndpoint + '/' + $sourceID)     
     }catch{
-        Write-Host "Source Get Error -"  $sourceResponse
+        Write-Host "Source Get Error -"  $_
         BREAK
     }
 
@@ -247,11 +262,7 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
         }
         #submit config back into system
         try{
-           # if ($sourceID){#check if ID exisits if not create new rule
-                putToDTEnv -dtEnv $sEnv -body $newRule -endpoint ($configEndpoint + '/' + $sourceID)
-         <#    }else{#create new configuration 
-                postToDTEnv -dtEnv $sEnv -body $sourceResponse -endpoint ($configEndpoint)
-            } #>
+            putToDTEnv -dtEnv $sEnv -body $newRule -endpoint ($configEndpoint + '/' + $sourceID)
         }catch{
             Write-Host "Submission Error - " $newApp.tags[$i].Name ":" $newApp.conditions[$j].key
             Write-Host $_
