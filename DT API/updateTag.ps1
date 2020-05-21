@@ -28,6 +28,45 @@ function changeValue ($json, $old, $new) {#Change optional tag value
     $json
 }
 
+function changeHostGroup ($json, $old, $new) {#Change host group value
+    #update all hostgroup values present in Json tha match the old value
+    For($i=0;$i -lt $json.rules.Length; $i++){
+        if($json.rules[$i].conditions.comparisonInfo.value -ieq $old -And $json.rules[$i].conditions.key.attribute -eq "HOST_GROUP_NAME"){
+            $json.rules[$i].conditions.comparisonInfo.value = $new
+        }
+    }
+    $json
+}
+
+function changeDBName ($json, $old, $new) {#Change DBname
+    #update all matching DBName values present in Json tha match the old value
+    For($i=0;$i -lt $json.rules.Length; $i++){
+        if($json.rules[$i].conditions.comparisonInfo.value -ieq $old -And $json.rules[$i].conditions.key.attribute -eq "SERVICE_DATABASE_NAME"){
+            $json.rules[$i].conditions.comparisonInfo.value = $new
+        }
+    }
+    $json
+}
+
+function changeWebApp ($json, $old, $new) {#Change WebApp name
+    #update all matching WebApp values present in Json tha match the old value
+    For($i=0;$i -lt $json.rules.Length; $i++){
+        if($json.rules[$i].conditions.comparisonInfo.value -ieq $old -And $json.rules[$i].conditions.key.attribute -eq "WEB_APPLICATION_NAME"){
+            $json.rules[$i].conditions.comparisonInfo.value = $new
+        }
+    }
+    $json
+}
+
+function changeAppPool ($json, $old, $new) {#Change AppPool name
+    #update all matching AppPool values present in Json tha match the old value
+    For($i=0;$i -lt $json.rules.Length; $i++){
+        if($json.rules[$i].conditions.comparisonInfo.value -ieq $old -And $json.rules[$i].conditions.key.dynamicKey -eq "IIS_APP_POOL"){
+            $json.rules[$i].conditions.comparisonInfo.value = $new
+        }
+    }
+    $json
+}
 
 function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
     $dirtyResponse.psobject.properties.remove('metadata')
@@ -37,7 +76,7 @@ function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 
 <#Functions End#>
 
-For ($i=0;$i -lt $updates.updates.Length;$i++){
+For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined in Json
     switch ($updates.updates[$i].config){
         "Tag"{
             $configEndpoint = '/autoTags'
@@ -48,11 +87,10 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){
         }
     }
 
-    if ($updates.updates[$i].newValue -ieq ""){
+    if ($updates.updates[$i].newValue -ieq ""){ #check that new value exisits
         Write-Host "Update object " $i " does not have a valid value"
         Break
     }
-
 
     try{#Get json element to search for config ID
         $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $updates.updates[$i].name
@@ -72,28 +110,29 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){
             $newRule = changeValue -json $dtResponse -old $updates.updates[$i].oldValue -new $updates.updates[$i].newValue
         }
         "HostGroup"{
-
+            $newRule = changeHostGroup -json $dtResponse -old $updates.updates[$i].oldValue -new $updates.updates[$i].newValue
         }
         "AppPool"{
-
+            $newRule = changeAppPool -json $dtResponse -old $updates.updates[$i].oldValue -new $updates.updates[$i].newValue
         }
         "WebApp"{
-
+            $newRule = changeWebApp -json $dtResponse -old $updates.updates[$i].oldValue -new $updates.updates[$i].newValue
         }
         "DBName"{
-
+            $newRule = changeDBName -json $dtResponse -old $updates.updates[$i].oldValue -new $updates.updates[$i].newValue
         }
         Default {
             Write-Host "This functionality has not been written yet see README for supported functions"
             Break
         }
     }
-
+    
     try{#sumbit changes back into DT system
         putToDTEnv -dtEnv $sEnv -body (cleanMetaData -dirtyResponse $newRule) -endpoint ($configEndpoint + '/' + $sourceID)
     }catch{
         Write-Host "Submission Error - " $newApp.tags[$i].Name ":" $newApp.conditions[$j].key
         Write-Host $_
     }
-
 }
+
+
