@@ -17,7 +17,9 @@ try{
 <#FUNCTIONS LIST
 migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
 migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for management zones between environments
-
+getEnvironment ($rule){#retrieve which dynatrace environment to be used
+changeEnvironment ($mzConfig, $sEnv, $dEnv) {#Change environment tag   
+cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 #>
 
 function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for management zones between environments

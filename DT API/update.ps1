@@ -15,8 +15,12 @@ try{
 $sEnv = $environments.testing
 
 <# Functions List
-
-
+function changeValue ($json, $old, $new) {#Change optional tag value
+function changeHostGroup ($json, $old, $new) {#Change host group value
+function changeDBName ($json, $old, $new) {#Change DBname
+function changeWebApp ($json, $old, $new) {#Change WebApp name
+function changeAppPool ($json, $old, $new) {#Change AppPool name
+function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 #>
 function changeValue ($json, $old, $new) {#Change optional tag value
     #update all optional values present in Json tha match the old value
@@ -27,7 +31,6 @@ function changeValue ($json, $old, $new) {#Change optional tag value
     }
     $json
 }
-
 function changeHostGroup ($json, $old, $new) {#Change host group value
     #update all hostgroup values present in Json tha match the old value
     For($i=0;$i -lt $json.rules.Length; $i++){
@@ -37,7 +40,6 @@ function changeHostGroup ($json, $old, $new) {#Change host group value
     }
     $json
 }
-
 function changeDBName ($json, $old, $new) {#Change DBname
     #update all matching DBName values present in Json tha match the old value
     For($i=0;$i -lt $json.rules.Length; $i++){
@@ -47,7 +49,6 @@ function changeDBName ($json, $old, $new) {#Change DBname
     }
     $json
 }
-
 function changeWebApp ($json, $old, $new) {#Change WebApp name
     #update all matching WebApp values present in Json tha match the old value
     For($i=0;$i -lt $json.rules.Length; $i++){
@@ -57,7 +58,6 @@ function changeWebApp ($json, $old, $new) {#Change WebApp name
     }
     $json
 }
-
 function changeAppPool ($json, $old, $new) {#Change AppPool name
     #update all matching AppPool values present in Json tha match the old value
     For($i=0;$i -lt $json.rules.Length; $i++){
@@ -67,7 +67,6 @@ function changeAppPool ($json, $old, $new) {#Change AppPool name
     }
     $json
 }
-
 function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
     $dirtyResponse.psobject.properties.remove('metadata')
     $dirtyResponse.psobject.properties.remove('id')
@@ -126,7 +125,7 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined 
             Break
         }
     }
-    
+
     try{#sumbit changes back into DT system
         putToDTEnv -dtEnv $sEnv -body (cleanMetaData -dirtyResponse $newRule) -endpoint ($configEndpoint + '/' + $sourceID)
     }catch{
