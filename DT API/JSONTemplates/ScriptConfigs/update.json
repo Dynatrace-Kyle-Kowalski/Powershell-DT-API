@@ -1,0 +1,35 @@
+{
+    "updates" : [
+        {
+            "config":"Tag",
+            "name":"TagName",
+            "item":"Value",
+            "oldValue":"Old",
+            "newValue":"New"
+        },{
+            "config":"Tag",
+            "name":"TagName",
+            "item":"HostGroup",
+            "oldValue":"Old",
+            "newValue":"HG TEST"
+        },{
+            "config":"Tag",
+            "name":"TagName",
+            "item":"DBName",
+            "oldValue":"Old",
+            "newValue":"DB TEST"
+        },{
+            "config":"Tag",
+            "name":"TagName",
+            "item":"WebApp",
+            "oldValue":"Old",
+            "newValue":"Web App Test"
+        },{
+            "config":"Tag",
+            "name":"TagName",
+            "item":"AppPool",
+            "oldValue":"Old",
+            "newValue":"App Pool Test"
+        }
+    ]
+}
