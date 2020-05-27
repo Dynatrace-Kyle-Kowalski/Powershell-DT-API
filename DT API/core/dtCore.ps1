@@ -7,6 +7,7 @@ Functions List
     getFromDTEnv($dtEnv, $endpoint, $parameters){#get Configruation from Dynatrace environment
     requestBuilder($endpoint, $parameters, $environment){#build string based on variables for script flexibility
     getIdValue($apiResponse ,$name){#Query the ID list to find the id needed
+    backupConfig ($path ,$body ,$config){#output json object to backups directory
 #>
 
 #Set API version to be used
@@ -78,7 +79,7 @@ function getFromDTEnv($dtEnv, $endpoint, $parameters){#get Configruation from Dy
 
 function requestBuilder($endpoint, $parameters, $environment){#build string based on variables for script flexibility
     
-    if($environment.isDTManaged -ieq "True"){
+    if($environment.isDTManaged -ieq $true){
         if (!$parameters){
             'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint
         }else {
@@ -97,4 +98,29 @@ function getIdValue($apiResponse ,$name){#Query the ID list to find the id neede
     #Write-Host $apiResponse
     $idReturn = $apiResponse.values | Where-Object {$_.name -eq $name}
     $idReturn.id
+}
+
+
+function backupConfig ($path ,$body ,$config){#output json object to backups directory
+    #remove api slash
+    $config = $config.Trim("/")
+    #get date for rolling files
+    $date = Get-Date -Format "yyyyMMddZHHmm"
+    #get config name from json
+    $name = $body.name
+    #convert body to json
+    $body = ConvertTo-Json -depth 24 -InputObject $body
+    
+    if (-not (Test-Path -Path "$path\backups")){#check if backups directory exisits if not create
+        New-Item -Path "$path" -Name 'backups' -ItemType "Directory"
+    }
+    if (-not (Test-Path -Path "$path\backups\$date")){#check if date directory exisits if not create
+        New-Item -Path "$path\backups\" -Name $date -ItemType "Directory"
+    }
+    if (-not (Test-Path -Path "$path\backups\$date\$config")){#check if configuration directory exisits if not create
+        New-Item -Path "$path\backups\$date" -Name $config -ItemType "Directory"
+    }
+    
+    New-Item -Path "$path\backups\$date\$config" -Name "$name.bak" -ItemType "File" -Value $body
+
 }

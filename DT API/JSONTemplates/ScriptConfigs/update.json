@@ -1,5 +1,6 @@
 {
     "environment" : "nonProd",
+    "backup": true,
     "updates" : [
         {
             "config":"Tag",

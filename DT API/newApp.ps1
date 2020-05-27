@@ -1,12 +1,12 @@
+#Path to project
+$path = '.\DT API'
 #DT Enironments to be used in migration
-
-. '.\DT API\core\dtCore.ps1'
+. $path'\core\dtCore.ps1'
 
 #Try to read configs from json file
-#\Documents\Code\Powershell
 try{
-    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
-    $newApp = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\newApp.json')
+    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\environments.json')
+    $newApp = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\newApp.json')
 }catch{
     Write-Host "File Read Error"
     BREAK
