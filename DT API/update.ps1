@@ -22,6 +22,7 @@ function changeWebApp ($json, $old, $new) {#Change WebApp name
 function changeAppPool ($json, $old, $new) {#Change AppPool name
 function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 #>
+
 function changeValue ($json, $old, $new) {#Change optional tag value
     #update all optional values present in Json tha match the old value
     For($i=0;$i -lt $json.rules.Length; $i++){
@@ -77,7 +78,7 @@ function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 
 For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined in Json
     switch ($updates.updates[$i].config){
-        "Tag"{
+        "/autoTags"{
             $configEndpoint = '/autoTags'
         }
         default{
