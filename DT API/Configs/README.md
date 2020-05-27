@@ -77,7 +77,7 @@ select which enviornment this script should run against
 
 >***backup***
 
-Boolean value indicating if config should also create a back up
+Boolean value indicating if config should also create a back up of orginial config
 
 >***updates***
 

@@ -121,6 +121,10 @@ function backupConfig ($path ,$body ,$config){#output json object to backups dir
         New-Item -Path "$path\backups\$date" -Name $config -ItemType "Directory"
     }
     
-    New-Item -Path "$path\backups\$date\$config" -Name "$name.bak" -ItemType "File" -Value $body
-
+    if (-not (Test-Path -Path "$path\backups\$date\$config\$name.json.bak" -PathType Leaf)){
+        New-Item -Path "$path\backups\$date\$config" -Name "$name.json.bak" -ItemType "File" -Value $body
+    }else{
+        $temp = Get-Date -Format "HHmmssffff"
+        New-Item -Path "$path\backups\$date\$config" -Name "$name-$temp.json.bak" -ItemType "File" -Value $body
+    }
 }
