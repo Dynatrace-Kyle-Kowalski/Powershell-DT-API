@@ -11,8 +11,15 @@ try{
 }
 <#API FRAME WORK SET UP END#>
 
+
 #Set environment to be used
-$sEnv = $environments.testing
+if($updates.environment -ieq "Prod"){
+    $sEnv = $environments.prod
+}elseif ($rule -eq "DTTesting"){
+    $sEnv = $environments.testing
+}else{
+    $sEnv = $environments.nonProd
+}
 
 <# Functions List
 function changeValue ($json, $old, $new) {#Change optional tag value
@@ -76,6 +83,7 @@ function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 
 <#Functions End#>
 
+
 For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined in Json
     switch ($updates.updates[$i].config){
         "/autoTags"{
@@ -134,5 +142,3 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined 
         Write-Host $_
     }
 }
-
-

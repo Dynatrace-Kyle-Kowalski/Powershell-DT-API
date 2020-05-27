@@ -13,6 +13,17 @@ try{
 }
 <#API FRAME WORK SET UP END#>
 
+#Set environment to be used
+if($newApp.environment -ieq "Prod"){
+    $sEnv = $environments.prod
+}elseif ($rule -eq "DTTesting"){
+    $sEnv = $environments.testing
+}else{
+    $sEnv = $environments.nonProd
+}
+
+
+
 <#FUNCTIONS LIST
 addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
 #>
@@ -97,16 +108,15 @@ function addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optional
 }
 
 #loop through new App File
-For ($i=0;$i -lt $newApp.tags.Length;$i++){
+For ($i=0;$i -lt $newApp.tags.values.Length;$i++){
     $configEndpoint = '/autoTags'
-    $sEnv = $environments.testing
 
     try{ 
 
 
         #Get json element to search for config ID
         $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $newApp.tags[$i].Name
-        $name = $newApp.tags[$i].Name
+        $name = $newApp.tags.values[$i].Name
 
         if($null -eq $sourceID){
             #format new tag Json
@@ -145,7 +155,6 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
                 #Set properties for adding rule object to config
                 $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key  -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
                 $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_SERVICE"
-                $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_HOST"
             }
             "WebApp"{
                 $key = createKey -type $newApp.conditions[$j].key

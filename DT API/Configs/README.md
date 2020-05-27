@@ -14,11 +14,12 @@ Enter API information in environments.json to designate environmental propeties 
   Saas Location:     https://environmentID. **live.dynatrace.com**
 >***APIToken***:
   
-*Migration Permissions*
+*Token Permissions*
 ```
 Read Configuration 
 Write Configuration
 ```
+
 >***isDTManaged***
 
 Flag used to determine if environments are within a managed environment

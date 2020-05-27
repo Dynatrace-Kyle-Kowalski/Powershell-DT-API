@@ -1,30 +1,33 @@
 {
-    "tags" : [
-        {
-            "Name": "Tag 1",
-            "Value": "ITSM Demo"
-        },
-        {
-            "Name": "Tag 2",
-            "Value": "ITSM Demo"
-        }
-    ],
-    "conditions" : [
-        {
-            "key": "HostGroup",
-            "value": "TST"
-        },
-        {
-            "key": "AppPool",
-            "value": "IIS App Pool"
-        },
-        {
-            "key": "WebApp",
-            "value": "webapplication.com"
-        },
-        {
-            "key": "DBName",
-            "value": "Database"
-        }
-    ]
-}
+    "environment": "nonProd",
+    "tags" : {
+        "values" : [
+            {
+                "Name": "Tag 1",
+                "Value": "ITSM Demo"
+            },
+            {
+                "Name": "Tag 2",
+                "Value": "ITSM Demo"
+            }
+        ],
+        "conditions" : [
+            {
+                "key": "HostGroup",
+                "value": "TST"
+            },
+            {
+                "key": "AppPool",
+                "value": "IIS App Pool"
+            },
+            {
+                "key": "WebApp",
+                "value": "webapplication.com"
+            },
+            {
+                "key": "DBName",
+                "value": "Database"
+            }
+        ]
+    }
+} 
