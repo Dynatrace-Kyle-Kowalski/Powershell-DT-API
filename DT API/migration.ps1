@@ -1,18 +1,18 @@
+#Path to project
+$path = '.\DT API'
 #DT Enironments to be used in migration
-
-. '.\DT API\core\dtCore.ps1'
+. $path'\core\dtCore.ps1'
 
 #Try to read configs from json file
-#\Documents\Code\Powershell
 try{
-    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
-    $migrations = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\migration.json')
+    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\environments.json')
+    $migrations = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\migration.json')
 }catch{
-    Write-Host "File Read Error"
+    Write-Host "File Read Error" $_
     BREAK
 }
 
-<#API FRAME WORK SET UP END#>
+
 
 <#FUNCTIONS LIST
 migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
@@ -48,14 +48,21 @@ function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for managem
 
     $cleanBody = changeEnvironment -mzConfig $cleanBody -sEnv $rules.sEnv -dEnv $rules.dEnv
     $cleanBody.name = ($rules.name + ' - ' + $rules.dEnv.ToUpper())
-
     try{
+        if($migrations.backup -eq $true){#output json to backups file to save 
+            try{
+                backupConfig -path $path -body $cleanbody -config '/managementZones'
+            }catch{
+                Write-Host "config back up error"
+            }
+        }
         #check for exisiting Config
         if ($destID){#put new json in for config
             putToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('/managementZones' + '/' + $destID)
         }else{#create new configuration 
             postToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ('/managementZones')
         }
+
     }catch{
         Write-Host "Submission Error - MZ"
     }
@@ -63,11 +70,6 @@ function migrateMZConfig ($rules, $sEnv, $dEnv){#Migration for rules for managem
 }
 
 function migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration for rules that utilize a Dynatrace Hash ID
-    $sourceResponse = $null
-    $destResponse = $null
-    $destID = $null
-    $cleanBody = $null
-
     try{ 
         #Get json element to search for config ID
         $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint
@@ -91,6 +93,13 @@ function migrateIDConfig ($configEndpoint, $configName, $sEnv, $dEnv){#Migration
     #cleanUpRequest
     $cleanBody = cleanMetaData -dirtyResponse $sourceResponse
     try{
+        if($migrations.backup -eq $true){#output json to backups file to save 
+            try{
+                backupConfig -path $path -body $cleanbody -config $configEndpoint
+            }catch{
+                Write-Host "config back up error"
+            }
+        }
         #check for exisiting Config
         if ($destID){#put new json in for config
             putToDTEnv -dtEnv $dEnv -body $cleanBody -endpoint ($configEndpoint + '/' + $destID)

@@ -1,17 +1,28 @@
+#Path to project
+$path = '.\DT API'
 #DT Enironments to be used in migration
-
-. '.\DT API\core\dtCore.ps1'
+. $path'\core\dtCore.ps1'
 
 #Try to read configs from json file
-#\Documents\Code\Powershell
 try{
-    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
-    $newApp = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\newApp.json')
+    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\environments.json')
+    $newApp = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\newApp.json')
 }catch{
     Write-Host "File Read Error"
     BREAK
 }
 <#API FRAME WORK SET UP END#>
+
+#Set environment to be used
+if($newApp.environment -ieq "Prod"){
+    $sEnv = $environments.prod
+}elseif ($newApp.environment -eq "DTTesting"){
+    $sEnv = $environments.testing
+}else{
+    $sEnv = $environments.nonProd
+}
+
+
 
 <#FUNCTIONS LIST
 addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
@@ -40,8 +51,7 @@ function createKey ($type){#generate key value for the different rules
     $return 
 }
 
-function addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue)
-{#Format rules string to update an exisiting rule configuration
+function addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optionalValue){#Format rules string to update an exisiting rule configuration
     if ($null -ne $optionalValue){
         #New Rules Object with Optional Tag name
         $rulesJson = @"
@@ -97,18 +107,14 @@ function addBasicRule ($sJson, $entity, $condtionKey, $conditionValue, $optional
 }
 
 #loop through new App File
-For ($i=0;$i -lt $newApp.tags.Length;$i++){
+For ($i=0;$i -lt $newApp.tags.values.Length;$i++){
     $configEndpoint = '/autoTags'
-    $sEnv = $environments.testing
 
     try{ 
-
-
         #Get json element to search for config ID
-        $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $newApp.tags[$i].Name
-        $name = $newApp.tags[$i].Name
-
-        if($null -eq $sourceID){
+        $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $newApp.tags.values[$i].Name
+        $name = $newApp.tags.values[$i].Name
+        if($null -eq $sourceID){#if tag does not exist create it
             #format new tag Json
             $newTag =  ConvertFrom-Json -InputObject @"
             {
@@ -121,7 +127,6 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
             #get new id
             $sourceID = $sourceID.id 
         }
-
         #Get json element for config
         $sourceResponse = getFromDTEnv -dtEnv $sEnv -endpoint ($configEndpoint + '/' + $sourceID)     
     }catch{
@@ -130,32 +135,31 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
     }
 
     #loop though all conditions
-    For($j=0;$j -lt $newApp.conditions.Length;$j++){
+    For($j=0;$j -lt $newApp.tags.conditions.Length;$j++){
         $key = $null 
-        switch ($newApp.conditions[$j].key){
+        switch ($newApp.tags.conditions[$j].key){
             "HostGroup"{
-                $key = createKey -type $newApp.conditions[$j].key
+                $key = createKey -type $newApp.tags.conditions[$j].key
                 #Set properties for adding rule object to config
-                $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
+                $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key -conditionValue $newApp.tags.conditions[$j].value -optionalValue $newApp.tags.values[$i].Value
                 $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_SERVICE"
                 $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_HOST"
             }
             "AppPool"{
-                $key = createKey -type $newApp.conditions[$j].key
+                $key = createKey -type $newApp.tags.conditions[$j].key
                 #Set properties for adding rule object to config
-                $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key  -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
+                $newRule = addBasicRule -sJson $sourceResponse -entity "PROCESS_GROUP" -condtionKey $key  -conditionValue $newApp.tags.conditions[$j].value -optionalValue $newApp.tags.values[$i].Value
                 $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_SERVICE"
-                $newRule.rules[($newRule.rules.Length-1)].propagationTypes += "PROCESS_GROUP_TO_HOST"
             }
             "WebApp"{
-                $key = createKey -type $newApp.conditions[$j].key
+                $key = createKey -type $newApp.tags.conditions[$j].key
                 #Set properties for adding rule object to config
-                $newRule = addBasicRule -sJson $sourceResponse -entity "APPLICATION" -condtionKey $key  -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
+                $newRule = addBasicRule -sJson $sourceResponse -entity "APPLICATION" -condtionKey $key  -conditionValue $newApp.tags.conditions[$j].value -optionalValue $newApp.tags.values[$i].Value
             }
             "DBName"{
-                $key = createKey -type $newApp.conditions[$j].key
+                $key = createKey -type $newApp.tags.conditions[$j].key
                 #Set properties for adding rule object to config
-                $newRule = addBasicRule -sJson $sourceResponse -entity "SERVICE" -condtionKey $key  -conditionValue $newApp.conditions[$j].value -optionalValue $newApp.tags[$i].Value
+                $newRule = addBasicRule -sJson $sourceResponse -entity "SERVICE" -condtionKey $key  -conditionValue $newApp.tags.conditions[$j].value -optionalValue $newApp.tags.values[$i].Value
             }
             default{
                 Write-Host "Unsupported Rule"
@@ -166,7 +170,7 @@ For ($i=0;$i -lt $newApp.tags.Length;$i++){
         try{
             putToDTEnv -dtEnv $sEnv -body $newRule -endpoint ($configEndpoint + '/' + $sourceID)
         }catch{
-            Write-Host "Submission Error - " $newApp.tags[$i].Name ":" $newApp.conditions[$j].key
+            Write-Host "Submission Error - " $newApp.tags.values[$i].Name ":" $newApp.tags.conditions[$j].key
             Write-Host $_
         }
     }

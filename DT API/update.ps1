@@ -1,18 +1,27 @@
-. '.\DT API\core\dtCore.ps1'
+#Path to project
+$path = '.\DT API'
+#DT Enironments to be used in migration
+. $path'\core\dtCore.ps1'
 
 #Try to read configs from json file
-#\Documents\Code\Powershell
 try{
-    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\environments.json')
-    $updates = ConvertFrom-Json -InputObject (Get-Content -Raw -Path '.\DT API\Configs\update.json')
+    $environments = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\environments.json')
+    $updates = ConvertFrom-Json -InputObject (Get-Content -Raw -Path $path'\Configs\update.json')
 }catch{
     Write-Host "File Read Error"
     BREAK
 }
 <#API FRAME WORK SET UP END#>
 
+
 #Set environment to be used
-$sEnv = $environments.testing
+if($updates.environment -ieq "Prod"){
+    $sEnv = $environments.prod
+}elseif ($rule -eq "DTTesting"){
+    $sEnv = $environments.testing
+}else{
+    $sEnv = $environments.nonProd
+}
 
 <# Functions List
 function changeValue ($json, $old, $new) {#Change optional tag value
@@ -76,12 +85,13 @@ function cleanMetaData ($dirtyResponse){#clean cluster meta data and ID
 
 <#Functions End#>
 
+
 For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined in Json
-    switch ($updates.updates[$i].config){
+    switch ($updates.updates[$i].config){#set config based on input value
         "/autoTags"{
             $configEndpoint = '/autoTags'
         }
-        default{
+        default{#Error message indicating functionality is not written
             Write-Host "This functionality has not been written yet see README for supported functions"
             Break
         }
@@ -94,7 +104,7 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined 
 
     try{#Get json element to search for config ID
         $sourceID = getIdValue -apiResponse (getFromDTEnv -dtEnv $sEnv -endpoint $configEndpoint) -name $updates.updates[$i].name
-        if($null -eq $sourceID){
+        if($null -eq $sourceID){#check if element exisits if not fail. Script does not create only update
             Write-Host "ERROR - Name "$updates.updates[$i].name " does not exisit"
             break
         }
@@ -105,7 +115,15 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined 
         BREAK
     }
 
-    switch ($updates.updates[$i].item) {
+    if($updates.backup -eq $true){#output json to backup file to save 
+        try{
+            backupConfig -path $path -body $dtResponse -config $configEndpoint
+        }catch{
+            Write-Host "config back up error"
+        }
+    }
+
+    switch ($updates.updates[$i].item) {#update section of tag based on indication
         "Value" {
             $newRule = changeValue -json $dtResponse -old $updates.updates[$i].oldValue -new $updates.updates[$i].newValue
         }
@@ -134,5 +152,3 @@ For ($i=0;$i -lt $updates.updates.Length;$i++){#loop to update elements defined 
         Write-Host $_
     }
 }
-
-

@@ -3,12 +3,12 @@
        "Environment":"abc12345",
        "Domain":"live.dynatrace.com",
        "APIToken":"-",
-       "isDTManaged":"False"
+       "isDTManaged": false
     },
     "prod":{
       "Environment":"abcd1-asdfqw-2134",
       "Domain":"xxx.dynatrace-managed.com",
       "APIToken":"-",
-      "isDTManaged":"True"
+      "isDTManaged": true
    }
 }
