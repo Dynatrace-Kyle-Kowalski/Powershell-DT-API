@@ -78,18 +78,19 @@ function getFromDTEnv($dtEnv, $endpoint, $parameters, $api){#get Configruation f
 }
 
 function requestBuilder($endpoint, $parameters, $environment, $api){#build string based on variables for script flexibility
+    #TODO - Figure out how to make this more flexible without destroying config workflows
     if ($api -eq 'enviornment') {
         if($environment.isDTManaged -ieq $true){
             if (!$parameters){
-                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/environment/' + $apiversion + $endpoint
+                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/' + 'v2' + $endpoint
             }else {
-                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/environment/' + $apiversion + $endpoint + "?" + $parameters
+                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/' + 'v2' + $endpoint + "?" + $parameters
             }
         }else{
             if (!$parameters){
-                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/environment/' + $apiversion  + $endpoint
+                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/' + 'v2'  + $endpoint
             }else {
-                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/environment/' + $apiversion + $endpoint + "?" + $parameters
+                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/' + 'v2' + $endpoint + "?" + $parameters
             }
         }
     }else{
