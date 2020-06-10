@@ -46,35 +46,46 @@ while ($log.nextPageKey)
     $auditList += $log.auditlogs
     $nextPageKey = $log.nextPageKey
 }
-$accessLog = @()
-$accessLog += '"UserName","Timestamp"'
 
-$configLog = @()
-$configLog += '"UserName","Timestamp","Event Type","Entity","Log ID"'
-
-
-for ($i=0;$i -lt $auditList.Length; $i++){
-    if($auditList[$i].userOrigin -ieq "system"){
-        break;
-    }
-    if($auditList[$i].eventType -ieq "LOGIN"){
-        #build csv line
-        $accessLog += $auditList[$i].user + "," + (Get-Date -Date (convertEpoch -timestamp $auditList[$i].timestamp) -Format "MM/dd/yyyy HH:mm")
-        $al++
-    }else{
-        #build csv line
-        $date = convertEpoch -timestamp $auditList[$i].timestamp
-        $configLog += $auditList[$i].user + "," + (Get-Date -Date ($date) -Format "MM/dd/yyyy HH:mm") +','+ $auditList[$i].eventType + ',' + $auditList[$i].entityId + ',' + $auditList[$i].logId
-        $cl++
-    }
-}
-
-$folder = Get-Date -Format "yyyyMMdd-HHmm"
+$folder = Get-Date -Format "MMddyyyy-HHmm"
 if (-not (Test-Path -Path "$path\Output\$folder")){#check if backups directory exisits if not create
     New-Item -Path "$path\Output\" -Name $folder -ItemType "Directory"
 }
+#File Set up
+New-Item -Path "$path\Output\$folder" -Name "AccessLog.csv" -ItemType "File" 
+Add-Content -Path "$path\Output\$folder\AccessLog.csv" -Value '"UserName","Timestamp"'
+#File Setup
+New-Item -Path "$path\Output\$folder" -Name "ConfigLog.csv" -ItemType "File" 
+Add-Content -Path "$path\Output\$folder\ConfigLog.csv" -Value '"UserName","Timestamp","Event Type","Entity","Log ID"'
 
-#create and writeAccessLog
+for ($i=0;$i -lt $auditList.Length; $i++){
+    if($auditList[$i].userOrigin -ine "system"){
+        if($auditList[$i].eventType -ieq "LOGIN"){
+                #build csv line
+                Add-Content -Path "$path\Output\$folder\AccessLog.csv" -Value ($auditList[$i].user + "," + (Get-Date -Date (convertEpoch -timestamp $auditList[$i].timestamp) -Format "MM/dd/yyyy HH:mm"))
+            }else{
+                #build csv line
+                $date = convertEpoch -timestamp $auditList[$i].timestamp
+                Add-Content -Path "$path\Output\$folder\ConfigLog.csv" -Value ($auditList[$i].user + "," + (Get-Date -Date ($date) -Format "MM/dd/yyyy HH:mm") +','+ $auditList[$i].eventType + ',' + $auditList[$i].entityId + ',' + $auditList[$i].logId)
+            }
+    }
+    
+}
+
+$auditList = ConvertTo-Json -Depth 24 -InputObject $auditList
+New-Item -Path "$path\Output\$folder" -Name "AuditLogOutput.json" -ItemType "File" -Value $auditList
+
+
+
+<#
+$folder = Get-Date -Format "MMddyyyy-HHmm"
+if (-not (Test-Path -Path "$path\Output\$folder")){#check if backups directory exisits if not create
+    New-Item -Path "$path\Output\" -Name $folder -ItemType "Directory"
+}
+New-Item -Path "$path\Output\$folder" -Name "AccessLog.csv" -ItemType "File" 
+New-Item -Path "$path\Output\$folder" -Name "ConfigLog.csv" -ItemType "File" 
+
+create and writeAccessLog
 New-Item -Path "$path\Output\$folder" -Name "AccessLog.csv" -ItemType "File" 
 for ($i=0;$i -lt $accessLog.Length; $i++){
      Add-Content -Path "$path\Output\$folder\AccessLog.csv" -Value $accessLog[$i] 
@@ -84,7 +95,6 @@ New-Item -Path "$path\Output\$folder" -Name "ConfigLog.csv" -ItemType "File"
 for ($i=0;$i -lt $configLog.Length; $i++){
      Add-Content -Path "$path\Output\$folder\ConfigLog.csv" -Value $configLog[$i] 
 }
+#>
 
 
-$auditList = ConvertTo-Json -Depth 24 -InputObject $auditList
-New-Item -Path "$path\Output\$folder" -Name "AuditLogOutput.json" -ItemType "File" -Value $auditList
