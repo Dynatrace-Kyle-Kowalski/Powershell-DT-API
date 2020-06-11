@@ -55,7 +55,7 @@ function createAudit(){
         $nextPageKey = $log.nextPageKey
     }
 
-    $folder = Get-Date -Format "MMddyyyy-HHmm"
+    $folder = Get-Date -Format "MMddyyyyZHHmm"
     if (-not (Test-Path -Path "$path\Output\$folder")){#check if backups directory exisits if not create
         New-Item -Path "$path\Output\" -Name $folder -ItemType "Directory"
     }
@@ -86,19 +86,24 @@ function createAudit(){
 
 
 function searchAudit($timestamp, $logID){
+    if($null -eq $logID){
+        Write-Host "Need LogID to look up please add proper parameter"
+        return
+    }
     $auditLog = ConvertFrom-Json -InputObject (Get-Content -Raw -Path "$path\Output\$timestamp\AuditLogOutput.json")
 
     $auditLog | ForEach-Object {
         if($_.logId -ieq $logID){
             ConvertTo-Json -depth 24 -InputObject $_ | Write-Host 
+            break
         }
     }
 }
 
 
-#searchAudit -timestamp 06102020-1427 -logID 159061051000030000
 
 
+#run script based on parameters being present
 if ($null -eq $timestamp){
     createAudit
 }else{
