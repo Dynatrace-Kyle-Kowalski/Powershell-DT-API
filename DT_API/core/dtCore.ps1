@@ -23,11 +23,11 @@ function executeRequest ( $request , $method, $headers, $body ){ #Execute api re
 } 
 
 
-function postToDtEnv ($dtEnv, $endpoint, $parameters, $body){#submit new config to Dynatrace environment
+function postToDtEnv ($dtEnv, $endpoint, $parameters, $body, $api){#submit new config to Dynatrace environment
     if (!$parameters){
-        $builtRequest = requestBuilder  -environment $dtEnv -endpoint $endpoint 
+        $builtRequest = requestBuilder  -environment $dtEnv -endpoint $endpoint -api $api
     }else{
-        $builtRequest = requestBuilder  -environment $dtEnv -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder  -environment $dtEnv -endpoint $endpoint -parameters $parameters -api $api
     }
 
     #Add HTTP Headders
@@ -42,11 +42,11 @@ function postToDtEnv ($dtEnv, $endpoint, $parameters, $body){#submit new config 
     return $return
 }
 
-function putToDTEnv($dtEnv, $endpoint, $parameters, $body){#update Configruation from Dynatrace environment
+function putToDTEnv($dtEnv, $endpoint, $parameters, $body, $api){#update Configruation from Dynatrace environment
     if (!$parameters){
-        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint 
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -api $api
     }else{
-        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -parameters $parameters -api $api
     }
 
     #Add Headers
@@ -61,11 +61,11 @@ function putToDTEnv($dtEnv, $endpoint, $parameters, $body){#update Configruation
     return $return
 }
 
-function getFromDTEnv($dtEnv, $endpoint, $parameters){#get Configruation from Dynatrace environment
+function getFromDTEnv($dtEnv, $endpoint, $parameters, $api){#get Configruation from Dynatrace environment
     if (!$parameters){
-        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint 
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -api $api
     }else{
-        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -parameters $parameters
+        $builtRequest = requestBuilder -environment $dtEnv -endpoint $endpoint -parameters $parameters -api $api
     }
     #Add Headers
     $requestHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
@@ -77,21 +77,38 @@ function getFromDTEnv($dtEnv, $endpoint, $parameters){#get Configruation from Dy
     return $return
 }
 
-function requestBuilder($endpoint, $parameters, $environment){#build string based on variables for script flexibility
-    
-    if($environment.isDTManaged -ieq $true){
-        if (!$parameters){
-            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint
-        }else {
-            'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+function requestBuilder($endpoint, $parameters, $environment, $api){#build string based on variables for script flexibility
+    #TODO - Figure out how to make this more flexible without destroying config workflows
+    if ($api -eq 'enviornment') {
+        if($environment.isDTManaged -ieq $true){
+            if (!$parameters){
+                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/' + 'v2' + $endpoint
+            }else {
+                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/' + 'v2' + $endpoint + "?" + $parameters
+            }
+        }else{
+            if (!$parameters){
+                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/' + 'v2'  + $endpoint
+            }else {
+                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/' + 'v2' + $endpoint + "?" + $parameters
+            }
         }
     }else{
-        if (!$parameters){
-            'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion  + $endpoint
-        }else {
-            'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+        if($environment.isDTManaged -ieq $true){
+            if (!$parameters){
+                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint
+            }else {
+                'https://' + $environment.Domain + '/e/' + $environment.Environment + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+            }
+        }else{
+            if (!$parameters){
+                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion  + $endpoint
+            }else {
+                'https://' + $environment.Environment + '.' + $environment.Domain + '/api/config/' + $apiversion + $endpoint + "?" + $parameters
+            }
         }
     }
+
 }
 
 function getIdValue($apiResponse ,$name){#Query the ID list to find the id needed

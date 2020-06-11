@@ -1,5 +1,5 @@
 #Path to project
-$path = '.\DT API'
+$path = '.\DT_API'
 #DT Enironments to be used in migration
 . $path'\core\dtCore.ps1'
 
