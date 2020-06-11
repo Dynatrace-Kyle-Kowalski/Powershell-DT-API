@@ -1,7 +1,11 @@
 param (
     [Parameter(Mandatory=$false)]
     [System.String]
-    $timestamp,
+    $environment,
+
+    [Parameter(Mandatory=$false)]
+    [System.String]
+    $folder,
 
     [Parameter(Mandatory=$false)]
     [System.String]
@@ -23,7 +27,7 @@ try{
 
 
 #Set environment to be used
-if($audit.environment -ieq "Prod"){
+if($environment -ieq "Prod"){
     $sEnv = $environments.prod
 }elseif ($rule -eq "DTTesting"){
     $sEnv = $environments.testing
@@ -31,7 +35,6 @@ if($audit.environment -ieq "Prod"){
     $sEnv = $environments.nonProd
 }
 
-$sEnv = $environments.nonProd
 
 function convertEpoch ($timestamp){#Convert Timestamp to Date-Time object
     $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
@@ -56,6 +59,7 @@ function createAudit(){
     }
 
     $folder = Get-Date -Format "MMddyyyyZHHmm"
+    $folder += "_" + $environment
     if (-not (Test-Path -Path "$path\Output\$folder")){#check if backups directory exisits if not create
         New-Item -Path "$path\Output\" -Name $folder -ItemType "Directory"
     }
@@ -104,8 +108,11 @@ function searchAudit($timestamp, $logID){
 
 
 #run script based on parameters being present
-if ($null -eq $timestamp){
+if ($environment -ne ""){
     createAudit
+}elseif ($timestamp -ne ""){
+    searchAudit -timestamp $folder -logID $logID
 }else{
-    searchAudit -timestamp $timestamp -logID $logID
+    Write-Host "Usage:" 
+    Write-Host "-environment to create archive of enviornment used or use -timestamp and -logID to search for a particular change"
 }
