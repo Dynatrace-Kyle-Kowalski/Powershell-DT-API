@@ -110,7 +110,7 @@ function searchAudit($timestamp, $logID){
 #run script based on parameters being present
 if ($environment -ne ""){
     createAudit
-}elseif ($timestamp -ne ""){
+}elseif ($folder -ne ""){
     searchAudit -timestamp $folder -logID $logID
 }else{
     Write-Host "Usage:" 
