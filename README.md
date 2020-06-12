@@ -11,8 +11,11 @@ https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/
 Audit functionality to retrieve last 30 days SaaS Audit log and search for entry
 
 Parms
+
 -environment : name from json to create audit structure
+
 -folder : name of folder to look for json in (kind of like a timestamp as folders created are based on day of run)
+
 -logID : the ID of the configuration to look up 
 
 NOTE -  folder and logID parms are needed in conjunction to look up json entry from audit log
