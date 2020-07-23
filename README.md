@@ -2,7 +2,7 @@
 Powershell scripts to help with common Dynatrace API Tasks. Each script takes the enviornments.json file to use to generate tokens and help centralize configs. In addition to the environments.json file each script has a config file it takes as inputs.
 
 
-###Installation
+### Installation
 
 Please be sure to Unblock the files following
 https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/unblock-file?view=powershell-7
