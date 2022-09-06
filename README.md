@@ -1,3 +1,7 @@
+**NOTE**
+Due to the changing of settings endpoints this will become depricated soon and is under no support. Used as an example of how to script the DT API
+
+
 # Powershell-DT-API
 Powershell scripts to help with common Dynatrace API Tasks. Each script takes the enviornments.json file to use to generate tokens and help centralize configs. In addition to the environments.json file each script has a config file it takes as inputs.
 
