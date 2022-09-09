@@ -1,6 +1,7 @@
 **NOTE**
 
-Due to the changing of settings endpoints this will become depricated soon and is under no support. Used as an example of how to script the DT API
+Due to the changing of settings endpoints this will become depricated soon and is under no support. Used as an example of how to script the DT API.
+For a more robust set up of managing configurations please look into the Dynatrace Monaco repo https://dynatrace-oss.github.io/dynatrace-monitoring-as-code/
 
 
 # Powershell-DT-API
